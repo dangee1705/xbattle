@@ -11,6 +11,7 @@ public class Client implements Runnable {
 	private String serverAddress;
 	private int serverPort;
 	private Socket socket;
+	private boolean running = false;
 	private Thread thread;
 	private DataInputStream dataInputStream;
 	private DataOutputStream dataOutputStream;
@@ -34,8 +35,11 @@ public class Client implements Runnable {
 	}
 
 	public void connect() {
-		thread = new Thread(this, "Client-Thread");
-		thread.start();
+		if(!running) {
+			running = true;
+			thread = new Thread(this, "Client-Thread");
+			thread.start();
+		}
 	}
 
 	public void addOnConnectListener(Listener listener) {
@@ -54,13 +58,13 @@ public class Client implements Runnable {
 			dataInputStream = new DataInputStream(socket.getInputStream());
 			dataOutputStream = new DataOutputStream(socket.getOutputStream());
 		} catch(IOException e) {
+			running = false;
 			onConnectErrorListeners.on();
 			return;
 		}
 
 		onConnectListeners.on();
 
-		boolean running = true;
 		while(running){
 			try {
 				byte b = dataInputStream.readByte();

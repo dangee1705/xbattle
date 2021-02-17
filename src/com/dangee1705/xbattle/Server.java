@@ -170,6 +170,7 @@ public class Server implements Runnable {
 		try {
 			serverSocket = new ServerSocket(XBattle.DEFAULT_PORT);
 		} catch (IOException e) {
+			running = false;
 			onStartErrorListeners.on();
 			return;
 		}

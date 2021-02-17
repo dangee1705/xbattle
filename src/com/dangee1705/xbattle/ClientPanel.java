@@ -11,6 +11,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 public class ClientPanel extends JPanel {
+
+	private static final long serialVersionUID = -4319791624197181177L;
 	private Client client;
 	private JComboBox<String> serverAddressComboBox;
 	private JComboBox<Integer> serverPortComboBox;
