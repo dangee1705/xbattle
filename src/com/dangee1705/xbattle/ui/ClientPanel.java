@@ -1,14 +1,20 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.ui;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+
+import com.dangee1705.xbattle.model.Client;
+import com.dangee1705.xbattle.model.NamedColor;
 
 public class ClientPanel extends JPanel {
 
@@ -16,6 +22,7 @@ public class ClientPanel extends JPanel {
 	private Client client;
 	private JComboBox<String> serverAddressComboBox;
 	private JComboBox<Integer> serverPortComboBox;
+	JPanel playerSettings;
 
 	public ClientPanel() {
 		client = new Client();
@@ -55,17 +62,45 @@ public class ClientPanel extends JPanel {
 			connectButton.setEnabled(false);
 			connectButton.setText("Connecting...");
 		});
-		client.addOnConnectListener(() -> SwingUtilities.invokeLater(() -> connectButton.setText("Connected")));
+		client.addOnConnectListener(() -> SwingUtilities.invokeLater(() -> {
+			connectButton.setText("Connected");
+			playerSettings.setVisible(true);
+		}));
 		client.addOnConnetErrorListener(() -> SwingUtilities.invokeLater(() -> {
 			connectButton.setEnabled(true);
 			connectButton.setText("Connect");
 		}));
 
-		// JPanel lobbyPanel = new JPanel();
-		// wrapperPanel.add(lobbyPanel);
+		playerSettings = new JPanel(new GridLayout(2, 2, 10, 10));
+		playerSettings.add(new JLabel("Name"));
+		JTextField nameTextField = new JTextField();
+		nameTextField.addKeyListener(new KeyListener() {
+			@Override
+			public void keyTyped(KeyEvent e) {
+				
+			}
 
-		// JButton startGameButton = new JButton("Start Game");
-		// startGameButton.setAlignmentX(CENTER_ALIGNMENT);
-		// wrapperPanel.add(startGameButton);
+			@Override
+			public void keyPressed(KeyEvent e) {
+				
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				client.sendNameChange(nameTextField.getText());
+			}
+			
+		});
+		playerSettings.add(nameTextField);
+		playerSettings.add(new JLabel("Colour"));
+		JComboBox<String> colorComboBox = new JComboBox<>();
+		for(NamedColor namedColor : XBattle.DEFAULT_NAMED_COLORS) {
+			colorComboBox.addItem(namedColor.getName());
+		}
+		playerSettings.add(colorComboBox);
+		playerSettings.setVisible(false);
+		wrapperPanel.add(playerSettings);
+
+		colorComboBox.setSelectedItem("Yellow");
 	}
 }

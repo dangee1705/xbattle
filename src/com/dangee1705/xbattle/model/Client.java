@@ -1,4 +1,4 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.model;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -85,13 +85,9 @@ public class Client implements Runnable {
 						break;
 					}
 					case 3: {
-						System.out.println("Game do be starting doe");
-						break;
-					}
-					case 4: {
+						// game starting
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
-						int tickRate = dataInputStream.readInt();
 						board = new Board(boardWidth, boardHeight);
 						break;
 					}
@@ -130,12 +126,23 @@ public class Client implements Runnable {
 						break;
 				}
 			} catch(IOException e) {
+				e.printStackTrace();
 				return;
 			}
 		}
 
 		try {
 			socket.close();
+		} catch (IOException e) {
+			
+		}
+	}
+
+	public void sendNameChange(String name) {
+		try {
+			dataOutputStream.writeByte(1);
+			dataOutputStream.writeInt(name.length());
+			dataOutputStream.writeBytes(name);
 		} catch (IOException e) {
 			
 		}

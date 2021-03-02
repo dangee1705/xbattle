@@ -1,4 +1,4 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.model;
 
 public class Cell {
 	private int x;
@@ -6,9 +6,9 @@ public class Cell {
 	private int troops;
 	private Player owner;
 	private int elevation;
-	private boolean[] paths;
+	private boolean[] paths = {false, false, false, false};
 	private int base;
-	private boolean hasUpdate;
+	private boolean hasUpdate = true;
 
 	public Cell(int x, int y) {
 		this.x = x;

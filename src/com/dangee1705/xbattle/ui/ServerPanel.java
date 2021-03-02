@@ -1,7 +1,10 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.GridLayout;
+import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -11,14 +14,18 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.ListCellRenderer;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
-public class ServerPanel extends JPanel {
+import com.dangee1705.xbattle.model.Server;
+import com.dangee1705.xbattle.model.Server.ClientHandler;
+
+public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandler> {
 
 	private static final long serialVersionUID = -8262626154827675947L;
-	private DefaultListModel<String> clientListModel;
-	private JList<String> clientList;
+	private DefaultListModel<ClientHandler> clientListModel;
+	private JList<ClientHandler> clientList;
 
 	private Server server;
 
@@ -51,6 +58,7 @@ public class ServerPanel extends JPanel {
 		lobbyPanel.setLayout(new BorderLayout());
 		clientListModel = new DefaultListModel<>();
 		clientList = new JList<>(clientListModel);
+		clientList.setCellRenderer(this);
 		JScrollPane clientListScrollPane = new JScrollPane(clientList);
 		lobbyPanel.add(clientListScrollPane, BorderLayout.CENTER);
 		wrapperPanel.add(lobbyPanel);
@@ -79,14 +87,29 @@ public class ServerPanel extends JPanel {
 			startServerButton.setEnabled(true);
 		}));
 		startGameButton.addActionListener(event -> {
-			server.sendGameStart();
+			try {
+				server.sendGameStart();
+			} catch(IOException e) {
+				
+			}
 		});
 	}
 
 	public void updateClientList() {
 		clientListModel.clear();
 		for(Server.ClientHandler clientHandler : server.getClientHandlers()) {
-			clientListModel.addElement(clientHandler.getSocket() + ", " + clientHandler.getPlayer());
+			if(clientHandler != null) {
+				clientListModel.addElement(clientHandler);
+			}
 		}
+	}
+
+	@Override
+	public Component getListCellRendererComponent(JList<? extends ClientHandler> list, ClientHandler value, int index, boolean isSelected, boolean cellHasFocus) {
+		ClientHandler clientHandler = (ClientHandler) value;
+		JLabel label = new JLabel(clientHandler.getSocket().getInetAddress().getHostName() + " - " + clientHandler.getPlayer().getName());
+		label.setForeground(XBattle.DEFAULT_NAMED_COLORS[clientHandler.getPlayer().getColorId()].getColor());
+		label.setBackground(new Color(192, 192, 192));
+		return label;
 	}
 }

@@ -1,4 +1,4 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.model;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+
+import com.dangee1705.xbattle.ui.XBattle;
 
 public class Server implements Runnable {
 	private int boardWidth = 10;
@@ -89,7 +91,7 @@ public class Server implements Runnable {
 			try {
 				this.dataInputStream = new DataInputStream(socket.getInputStream());
 				this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-			} catch (IOException e) {
+			} catch(IOException e) {
 				clientHandlers.remove(this);
 				onClientDisconnectListeners.on();
 				return;
@@ -112,42 +114,82 @@ public class Server implements Runnable {
 				byte b;
 				try {
 					b = this.dataInputStream.readByte();
-				} catch (IOException e) {
-					break;
-				}
 
-				switch(b) {
-					default:
-						System.out.println(b);
-				}
+					switch(b) {
+						case 0:
+							break;
+						case 1: {
+							int nameLength = dataInputStream.readInt();
+							byte[] nameBytes = dataInputStream.readNBytes(nameLength);
+							String name = new String(nameBytes);
+							getPlayer().setName(name);
+							onClientConnectListeners.on();
+							break;
+						}
+						default:
+							System.out.println(b);
+					}
+				} catch(IOException e) {
+					break;
+				}				
 			}
 
 			clientHandlers.remove(this);
 			onClientDisconnectListeners.on();
 		}
 
-		public void sendHello() {
-			try {
-				dataOutputStream.writeByte(0);
-				dataOutputStream.writeByte((byte) player.getId());
-				dataOutputStream.writeByte((byte) player.getColorId());
-			} catch (IOException e) {
-				return;
-			}
+		public void sendHello() throws IOException {
+			dataOutputStream.writeByte(0);
+			dataOutputStream.writeByte((byte) player.getId());
+			dataOutputStream.writeByte((byte) player.getColorId());
 		}
 
-		public void sendGameStart() {
-			try {
-				dataOutputStream.writeByte(3);
-			} catch (IOException e) {
-				return;
+		public void sendGameStart() throws IOException {
+			dataOutputStream.writeByte(3);
+			dataOutputStream.writeInt(board.getWidth());
+			dataOutputStream.writeInt(board.getHeight());
+		}
+
+		public void sendCell(Cell cell) throws IOException {
+			dataOutputStream.writeByte(5);
+			dataOutputStream.writeInt(cell.getX());
+			dataOutputStream.writeInt(cell.getY());
+			dataOutputStream.writeInt(cell.getTroops());
+			dataOutputStream.writeByte(cell.getOwner() == null ? -1 : cell.getOwner().getId());
+			dataOutputStream.writeInt(cell.getElevation());
+			for(boolean path : cell.getPaths())
+				dataOutputStream.writeBoolean(path);
+			dataOutputStream.writeInt(cell.getBase());
+		}
+
+		public void sendBoard() throws IOException {
+			sendBoard(false);
+		}
+
+		public void sendBoard(boolean updatesOnly) throws IOException {
+			for(int y = 0; y < board.getHeight(); y++) {
+				for(int x = 0; x < board.getWidth(); x++) {
+					if(!updatesOnly || board.getCell(x, y).getHasUpdate()) {
+						sendCell(board.getCell(x, y));
+					}
+				}
 			}
 		}
 	}
 
-	public void sendGameStart() {
+	public void sendGameStart() throws IOException {
 		for(ClientHandler clientHandler : clientHandlers)
 			clientHandler.sendGameStart();
+		sendBoard();
+	}
+
+	public void sendBoard() throws IOException {
+		sendBoard(false);
+	}
+
+	public void sendBoard(boolean updatesOnly) throws IOException {
+		for(ClientHandler clientHandler : clientHandlers)
+			clientHandler.sendBoard(updatesOnly);
 	}
 
 	public ArrayList<ClientHandler> getClientHandlers() {
@@ -177,10 +219,12 @@ public class Server implements Runnable {
 
 		onStartListeners.on();
 
+		int ci = 0;
+
 		while(running) {
 			try {
 				Socket socket = serverSocket.accept();
-				Player player = new Player(0, "PLAYER NAME", 0);
+				Player player = new Player(ci, "Player " + (ci + 1), ci++);
 				ClientHandler clientHandler = new ClientHandler(socket, player);
 				clientHandlers.add(clientHandler);
 				onClientConnectListeners.on();
@@ -190,6 +234,17 @@ public class Server implements Runnable {
 			}
 		}
 
+		try {
+			// this will tell each client the game is starting, then send the board to them
+			sendGameStart();
+		} catch(IOException e) {
+
+		}
+
+		// while(true) {
+		// 	sendBoard();
+		// }
+		
 		onStopListeners.on();
 	}
 }

@@ -1,4 +1,4 @@
-package com.dangee1705.xbattle;
+package com.dangee1705.xbattle.model;
 
 import java.util.ArrayList;
 
