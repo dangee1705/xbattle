@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -22,7 +23,7 @@ public class ClientPanel extends JPanel {
 	private Client client;
 	private JComboBox<String> serverAddressComboBox;
 	private JComboBox<Integer> serverPortComboBox;
-	JPanel playerSettings;
+	private JPanel playerSettings;
 
 	public ClientPanel() {
 		client = new Client();
@@ -87,7 +88,12 @@ public class ClientPanel extends JPanel {
 
 			@Override
 			public void keyReleased(KeyEvent e) {
-				client.sendNameChange(nameTextField.getText());
+				try {
+					client.sendPlayerUpdate();
+				} catch (IOException e1) {
+					// TODO: handle error
+					e1.printStackTrace();
+				}
 			}
 			
 		});

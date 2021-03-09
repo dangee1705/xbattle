@@ -90,7 +90,7 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 			try {
 				server.sendGameStart();
 			} catch(IOException e) {
-				
+				e.printStackTrace();
 			}
 		});
 	}
@@ -108,7 +108,7 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 	public Component getListCellRendererComponent(JList<? extends ClientHandler> list, ClientHandler value, int index, boolean isSelected, boolean cellHasFocus) {
 		ClientHandler clientHandler = (ClientHandler) value;
 		JLabel label = new JLabel(clientHandler.getSocket().getInetAddress().getHostName() + " - " + clientHandler.getPlayer().getName());
-		label.setForeground(XBattle.DEFAULT_NAMED_COLORS[clientHandler.getPlayer().getColorId()].getColor());
+		label.setForeground(clientHandler.getPlayer().getColorId() == -1 ? Color.BLACK : XBattle.DEFAULT_NAMED_COLORS[clientHandler.getPlayer().getColorId()].getColor());
 		label.setBackground(new Color(192, 192, 192));
 		return label;
 	}

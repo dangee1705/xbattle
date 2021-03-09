@@ -1,0 +1,56 @@
+lobby
+	server to client messages
+		hello
+			0:byte playerId:byte numberOfPlayers:byte
+		player
+			1:byte id:byte nameLength:int name:bytes colourId:byte
+		player colour selected
+			2:byte playerId:byte colourId:byte
+		game starting
+			3:byte
+	client to server messages
+		colour select
+			0:byte playerId:byte colourId:byte
+		name select
+			1:byte playerId:byte nameLength:int name:bytes
+
+pregame
+	server to client messages
+		info
+			4:byte mapWidth:int mapHeight:int tickRate:int
+		cells (send one of these for every cell in the board)
+			5:byte x:int y:int troops:int ownerId:byte elevation:byte up:bool down:bool left:bool right:bool base:int
+
+game
+	client to server messages
+		cells
+			2:byte x:int y:int troops:int ownerId:byte elevation:byte up:bool down:bool left:bool right:bool base:int
+
+
+-------------------------------------------------------------------------------
+
+lobby
+	server to client
+		hello
+			0:byte playerId:int
+		player update / join
+			1:byte playerId:int nameLength:int name:byte*nameLength colourId:int
+		player left
+			2:byte playerId:int
+		game starting
+			3:byte boardWidth:int boardHeight:int
+	client to server
+		player update
+			0:byte nameLength:int name:byte*nameLength colourId:int
+		
+
+game
+	server to client
+		cell update
+			4:byte x:int y:int troops:int ownerId:int elevation:int up:bool down:bool left:bool right:bool base:int
+		end of game
+			5:byte winnerId:int
+	client to server
+		cell update
+			1:byte x:int y:int elevation:int up:bool down:bool left:bool right:bool base:int
+

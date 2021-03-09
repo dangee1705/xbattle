@@ -1,13 +1,18 @@
 package com.dangee1705.xbattle.model;
 
 public class Cell {
+	public static final int NORTH = 0;
+	public static final int EAST = 1;
+	public static final int SOUTH = 2;
+	public static final int WEST = 3;
+
 	private int x;
 	private int y;
-	private int troops;
-	private Player owner;
-	private int elevation;
+	private int troops = 0;
+	private Player owner = null;
+	private int elevation = 0;
 	private boolean[] paths = {false, false, false, false};
-	private int base;
+	private int base = 0;
 	private boolean hasUpdate = true;
 
 	public Cell(int x, int y) {

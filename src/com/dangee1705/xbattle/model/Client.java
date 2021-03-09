@@ -16,6 +16,7 @@ public class Client implements Runnable {
 	private DataInputStream dataInputStream;
 	private DataOutputStream dataOutputStream;
 
+	private Player player = new Player(-1, "Player", -1);
 	private ArrayList<Player> players = new ArrayList<>();
 	private Board board;
 
@@ -60,69 +61,64 @@ public class Client implements Runnable {
 		} catch(IOException e) {
 			running = false;
 			onConnectErrorListeners.on();
+			e.printStackTrace();
 			return;
 		}
 
 		onConnectListeners.on();
 
 		while(running){
+			// TODO: make sure lobby commands cannot be run during game phase
 			try {
 				byte b = dataInputStream.readByte();
 				switch(b) {
 					case 0: {
-						int playerId = dataInputStream.readByte();
-						int numOfPlayers = dataInputStream.readByte();
+						int playerId = dataInputStream.readInt();
+						player.setId(playerId);
 						break;
 					}
 					case 1: {
 						int playerId = dataInputStream.readByte();
 						int playerNameLength = dataInputStream.readInt();
+						byte[] playerNameBytes = dataInputStream.readNBytes(playerNameLength);
+						String playerName = new String(playerNameBytes);
+						int playerColorId = dataInputStream.readInt();
+						// TODO: add or update the player
 						break;
 					}
 					case 2: {
 						int playerId = dataInputStream.readByte();
-						int colorId = dataInputStream.readByte();
+						// TODO: remove player from lobby
 						break;
 					}
 					case 3: {
-						// game starting
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
 						board = new Board(boardWidth, boardHeight);
 						break;
 					}
-					case 5: {
-						int cellX = dataInputStream.readInt();
-						int cellY = dataInputStream.readInt();
-						int cellTroops = dataInputStream.readInt();
-						int cellOwnerId = dataInputStream.readByte();
-						int cellElevation = dataInputStream.readByte();
-						boolean[] cellPaths = new boolean[4];
+					case 4: {
+						int x = dataInputStream.readInt();
+						int y = dataInputStream.readInt();
+						int troops = dataInputStream.readInt();
+						int ownerId = dataInputStream.readInt();
+						int elevation = dataInputStream.readInt();
+						boolean[] paths = new boolean[4];
 						for(int i = 0; i < 4; i++)
-							cellPaths[i] = dataInputStream.readBoolean();
-						int cellBase = dataInputStream.readInt();
-
-						Cell cell = board.getCell(cellX, cellY);
-						cell.setTroops(cellTroops);
-						Player owner = null;
-						for(Player player : players) {
-							if(player.getId() == cellOwnerId) {
-								owner = player;
-								break;
-							}
-						}
-						cell.setOwner(owner);
-						cell.setElevation(cellElevation);
-						for(int i = 0; i < 4; i++)
-							cell.setPath(i, cellPaths[i]);
-						cell.setBase(cellBase);
+							paths[i] = dataInputStream.readBoolean();
+						int base = dataInputStream.readInt();
+						// TODO: update cell on board
+						break;
 					}
-					case 6: {
-						running = false;
+					case 5: {
+						int winnerId = dataInputStream.readInt();
+						// TODO: announce winner
 						break;
 					}
 
 					default:
+						// TODO: handle message of wrong type
+						System.out.println("wrong message type");
 						break;
 				}
 			} catch(IOException e) {
@@ -134,17 +130,24 @@ public class Client implements Runnable {
 		try {
 			socket.close();
 		} catch (IOException e) {
-			
+			e.printStackTrace();
 		}
 	}
 
-	public void sendNameChange(String name) {
-		try {
-			dataOutputStream.writeByte(1);
-			dataOutputStream.writeInt(name.length());
-			dataOutputStream.writeBytes(name);
-		} catch (IOException e) {
-			
-		}
+	public void sendPlayerUpdate() throws IOException {
+		dataOutputStream.writeByte(0);
+		dataOutputStream.writeInt(player.getName().length());
+		dataOutputStream.writeBytes(player.getName());
+		dataOutputStream.writeInt(player.getColorId());
+	}
+
+	public void sendCellUpdate(Cell cell) throws IOException {
+		dataOutputStream.writeByte(1);
+		dataOutputStream.writeInt(cell.getX());
+		dataOutputStream.writeInt(cell.getY());
+		dataOutputStream.writeInt(cell.getElevation());
+		for(boolean path : cell.getPaths())
+			dataOutputStream.writeBoolean(path);
+		dataOutputStream.writeInt(cell.getBase());
 	}
 }
