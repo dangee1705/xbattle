@@ -43,6 +43,10 @@ public class Client implements Runnable {
 		}
 	}
 
+	public Player getPlayer() {
+		return player;
+	}
+
 	public void addOnConnectListener(Listener listener) {
 		onConnectListeners.add(listener);
 	}
@@ -75,15 +79,31 @@ public class Client implements Runnable {
 					case 0: {
 						int playerId = dataInputStream.readInt();
 						player.setId(playerId);
+						if(!players.contains(player))
+							players.add(player);
 						break;
 					}
 					case 1: {
-						int playerId = dataInputStream.readByte();
+						int playerId = dataInputStream.readInt();
 						int playerNameLength = dataInputStream.readInt();
 						byte[] playerNameBytes = dataInputStream.readNBytes(playerNameLength);
 						String playerName = new String(playerNameBytes);
 						int playerColorId = dataInputStream.readInt();
-						// TODO: add or update the player
+						
+						Player playerToUpdate = null;
+						for(Player player : players) {
+							if(player.getId() == playerId) {
+								playerToUpdate = player;
+								break;
+							}
+						}
+						if(playerToUpdate == null) {
+							playerToUpdate = new Player(playerId, playerName, playerColorId);
+							players.add(playerToUpdate);
+						} else {
+							playerToUpdate.setName(playerName);
+							playerToUpdate.setColorId(playerColorId);
+						}
 						break;
 					}
 					case 2: {

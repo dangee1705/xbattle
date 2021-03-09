@@ -89,10 +89,10 @@ public class ClientPanel extends JPanel {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				try {
+					client.getPlayer().setName(nameTextField.getText());
 					client.sendPlayerUpdate();
 				} catch (IOException e1) {
-					// TODO: handle error
-					e1.printStackTrace();
+					
 				}
 			}
 			
@@ -100,13 +100,24 @@ public class ClientPanel extends JPanel {
 		playerSettings.add(nameTextField);
 		playerSettings.add(new JLabel("Colour"));
 		JComboBox<String> colorComboBox = new JComboBox<>();
+		colorComboBox.addItem("Choose");
 		for(NamedColor namedColor : XBattle.DEFAULT_NAMED_COLORS) {
 			colorComboBox.addItem(namedColor.getName());
 		}
+		colorComboBox.setSelectedIndex(0);
+		colorComboBox.addActionListener(event -> {
+			int selected = colorComboBox.getSelectedIndex();
+			client.getPlayer().setColorId(selected - 1);
+			try {
+				client.sendPlayerUpdate();
+			} catch (IOException e) {
+				
+			}
+		});
 		playerSettings.add(colorComboBox);
 		playerSettings.setVisible(false);
 		wrapperPanel.add(playerSettings);
 
-		colorComboBox.setSelectedItem("Yellow");
+		
 	}
 }

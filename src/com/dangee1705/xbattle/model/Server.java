@@ -15,8 +15,10 @@ public class Server implements Runnable {
 	private int ticksPerSecond = 5;
 	private boolean running = false;
 	private Thread thread = null;
-	private Board board;
 	private ServerSocket serverSocket;
+
+	private ArrayList<Player> players = new ArrayList<>();
+	private Board board;
 
 	private Listeners onStartListeners = new Listeners();
 	private Listeners onStartErrorListeners = new Listeners();
@@ -93,6 +95,7 @@ public class Server implements Runnable {
 				this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
 			} catch(IOException e) {
 				clientHandlers.remove(this);
+				players.remove(player);
 				onClientDisconnectListeners.on();
 				return;
 			}
@@ -110,11 +113,17 @@ public class Server implements Runnable {
 
 		@Override
 		public void run() {
-			while(true) {
-				byte b;
-				try {
-					b = dataInputStream.readByte();
+			try {
+				sendHello();
+				for(Player player : players)
+					sendPlayerUpdate(player);
+			} catch(IOException e) {
+				// TODO: handle this
+			}
 
+			while(true) {
+				try {
+					byte b = dataInputStream.readByte();
 					switch(b) {
 						case 0: {
 							int nameLength = dataInputStream.readInt();
@@ -124,6 +133,7 @@ public class Server implements Runnable {
 							getPlayer().setName(name);
 							getPlayer().setColorId(colorId);
 							onClientConnectListeners.on(); // TODO: properly handle telling clients about updates
+							System.out.println("got player update (" + name + ", " + colorId + ")");
 							break;
 						} case 1: {
 							int x = dataInputStream.readInt();
@@ -146,6 +156,8 @@ public class Server implements Runnable {
 						}
 						default:
 							// TODO: do something with the invalid message
+							System.out.println("wrong");
+
 							break;
 					}
 				} catch(IOException e) {
@@ -155,19 +167,25 @@ public class Server implements Runnable {
 			}
 
 			clientHandlers.remove(this);
+			players.remove(player);
+			// TODO: let players know about disconnect
 			onClientDisconnectListeners.on();
 		}
 
 		public void sendHello() throws IOException {
 			dataOutputStream.writeByte(0);
-			dataOutputStream.writeInt((byte) player.getId());
+			dataOutputStream.writeInt(player.getId());
 		}
 
 		public void sendPlayerUpdate(Player player) throws IOException {
 			dataOutputStream.writeByte(1);
 			dataOutputStream.writeInt(player.getId());
-			dataOutputStream.writeInt(player.getName().length());
-			dataOutputStream.writeBytes(player.getName());
+			// dataOutputStream.writeInt(player.getName().length());
+			// dataOutputStream.writeBytes(player.getName());
+			byte[] nameBytes = player.getName().getBytes();
+			dataOutputStream.writeInt(nameBytes.length);
+			dataOutputStream.write(nameBytes);
+			
 			dataOutputStream.writeInt(player.getColorId());
 		}
 
@@ -263,9 +281,11 @@ public class Server implements Runnable {
 		while(running) {
 			try {
 				Socket socket = serverSocket.accept();
-				Player player = new Player(nextPlayerId, "Player " + (nextPlayerId + 1), -1);
+				Player player = new Player(nextPlayerId++, "Player " + nextPlayerId, -1);
 				ClientHandler clientHandler = new ClientHandler(socket, player);
 				clientHandlers.add(clientHandler);
+				players.add(player);
+
 				onClientConnectListeners.on();
 				clientHandler.sendHello();
 			} catch(IOException e) {
