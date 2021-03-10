@@ -22,6 +22,8 @@ public class Client implements Runnable {
 
 	private Listeners onConnectListeners = new Listeners();
 	private Listeners onConnectErrorListeners = new Listeners();
+	private Listeners onPlayerUpdateListeners = new Listeners();
+	private Listeners onGameStartListeners = new Listeners();
 
 	public Client() {
 
@@ -51,9 +53,16 @@ public class Client implements Runnable {
 		onConnectListeners.add(listener);
 	}
 
-
 	public void addOnConnetErrorListener(Listener listener) {
 		onConnectErrorListeners.add(listener);
+	}
+
+	public void addOnPlayerUpdateListener(Listener listener) {
+		onPlayerUpdateListeners.add(listener);
+	}
+
+	public void addOnGameStartListener(Listener listener) {
+		onGameStartListeners.add(listener);
 	}
 
 	@Override
@@ -83,6 +92,7 @@ public class Client implements Runnable {
 							players.add(player);
 						break;
 					}
+					// player update message
 					case 1: {
 						int playerId = dataInputStream.readInt();
 						int playerNameLength = dataInputStream.readInt();
@@ -104,6 +114,8 @@ public class Client implements Runnable {
 							playerToUpdate.setName(playerName);
 							playerToUpdate.setColorId(playerColorId);
 						}
+
+						onPlayerUpdateListeners.on();
 						break;
 					}
 					case 2: {
@@ -111,10 +123,12 @@ public class Client implements Runnable {
 						// TODO: remove player from lobby
 						break;
 					}
+					// game start message
 					case 3: {
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
 						board = new Board(boardWidth, boardHeight);
+						onGameStartListeners.on();
 						break;
 					}
 					case 4: {
@@ -156,8 +170,11 @@ public class Client implements Runnable {
 
 	public void sendPlayerUpdate() throws IOException {
 		dataOutputStream.writeByte(0);
-		dataOutputStream.writeInt(player.getName().length());
-		dataOutputStream.writeBytes(player.getName());
+		// dataOutputStream.writeInt(player.getName().length());
+		// dataOutputStream.writeBytes(player.getName());
+		byte[] nameBytes = player.getName().getBytes();
+		dataOutputStream.writeInt(nameBytes.length);
+		dataOutputStream.write(nameBytes);
 		dataOutputStream.writeInt(player.getColorId());
 	}
 

@@ -125,15 +125,26 @@ public class Server implements Runnable {
 				try {
 					byte b = dataInputStream.readByte();
 					switch(b) {
+						// player update message
 						case 0: {
 							int nameLength = dataInputStream.readInt();
 							byte[] nameBytes = dataInputStream.readNBytes(nameLength);
 							String name = new String(nameBytes);
 							int colorId = dataInputStream.readInt();
-							getPlayer().setName(name);
-							getPlayer().setColorId(colorId);
+							
+							boolean canChange = true;
+							for(Player player : players)
+								if(player != getPlayer() && (player.getName().equals(name) || player.getColorId() == colorId || colorId < -1 || colorId >= XBattle.DEFAULT_NAMED_COLORS.length))
+									canChange = false;
+
+							if(canChange) {
+								getPlayer().setName(name);
+								getPlayer().setColorId(colorId);
+							}
+
+							sendAllPlayers();
+						
 							onClientConnectListeners.on(); // TODO: properly handle telling clients about updates
-							System.out.println("got player update (" + name + ", " + colorId + ")");
 							break;
 						} case 1: {
 							int x = dataInputStream.readInt();
@@ -189,12 +200,17 @@ public class Server implements Runnable {
 			dataOutputStream.writeInt(player.getColorId());
 		}
 
+		public void sendAllPlayers() throws IOException {
+			for(Player player : players)
+				sendPlayerUpdate(player);
+		}
+
 		public void sendPlayerLeft(Player player) throws IOException {
 			dataOutputStream.writeByte(2);
 			dataOutputStream.writeInt(player.getId());
 		}
 
-		public void sendGameStarting() throws IOException {
+		public void sendGameStart() throws IOException {
 			dataOutputStream.writeByte(3);
 			dataOutputStream.writeInt(board.getWidth());
 			dataOutputStream.writeInt(board.getHeight());
@@ -233,10 +249,22 @@ public class Server implements Runnable {
 	}
 
 	public void sendGameStart() throws IOException {
+		// make sure that all the players have selected a colour
+		for(Player player : players)
+			if(player.getColorId() == -1)
+				return;
+		
+		// send every player to every client
+		sendAllPlayers();
+
+		// send game start to each client
 		for(ClientHandler clientHandler : clientHandlers)
-			clientHandler.sendGameStarting();
+			clientHandler.sendGameStart();
+	}
+
+	public void sendAllPlayers() throws IOException {
 		for(ClientHandler clientHandler : clientHandlers)
-			clientHandler.sendPlayerUpdate(clientHandler.getPlayer());
+			clientHandler.sendAllPlayers();
 	}
 
 	public void sendBoard() throws IOException {

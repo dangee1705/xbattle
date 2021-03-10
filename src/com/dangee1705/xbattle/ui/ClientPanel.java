@@ -88,6 +88,7 @@ public class ClientPanel extends JPanel {
 
 			@Override
 			public void keyReleased(KeyEvent e) {
+				// TODO: dont send after every keypress only on certain ones
 				try {
 					client.getPlayer().setName(nameTextField.getText());
 					client.sendPlayerUpdate();
@@ -100,24 +101,34 @@ public class ClientPanel extends JPanel {
 		playerSettings.add(nameTextField);
 		playerSettings.add(new JLabel("Colour"));
 		JComboBox<String> colorComboBox = new JComboBox<>();
-		colorComboBox.addItem("Choose");
+		colorComboBox.addItem("(Please Select)");
 		for(NamedColor namedColor : XBattle.DEFAULT_NAMED_COLORS) {
 			colorComboBox.addItem(namedColor.getName());
 		}
 		colorComboBox.setSelectedIndex(0);
 		colorComboBox.addActionListener(event -> {
-			int selected = colorComboBox.getSelectedIndex();
-			client.getPlayer().setColorId(selected - 1);
-			try {
-				client.sendPlayerUpdate();
-			} catch (IOException e) {
-				
+			int selected = colorComboBox.getSelectedIndex() - 1;
+			// make sure there was actually a change
+			if(selected != client.getPlayer().getColorId()) {
+				client.getPlayer().setColorId(selected);
+				try {
+					client.sendPlayerUpdate();
+				} catch (IOException e) {
+					
+				}
 			}
 		});
 		playerSettings.add(colorComboBox);
 		playerSettings.setVisible(false);
 		wrapperPanel.add(playerSettings);
 
-		
+		client.addOnPlayerUpdateListener(() -> SwingUtilities.invokeLater(() -> {
+			nameTextField.setText(client.getPlayer().getName());
+			colorComboBox.setSelectedIndex(client.getPlayer().getColorId() + 1);
+		}));
+
+		client.addOnGameStartListener(() -> {
+			System.out.println("client panel recieved game start");
+		});
 	}
 }
