@@ -1,5 +1,7 @@
 package com.dangee1705.xbattle.model;
 
+import java.util.Random;
+
 public class Board {
 	private int width;
 	private int height;
@@ -12,6 +14,75 @@ public class Board {
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
 				this.cells[y][x] = new Cell(x, y);
+			}
+		}
+	}
+
+	public Board(int width, int height, boolean gen) {
+		this(width, height);
+
+		// create a completely random set of cells
+		boolean[][] automataSourceCells = new boolean[height][width];
+		Random random = new Random();
+		for(int y = 0; y < height; y++)
+			for(int x = 0; x < width; x++)
+				// TODO: make this threshold modifiable
+				automataSourceCells[y][x] = random.nextFloat() > 0.5; 
+		
+		// run the cellular automata
+		boolean[][] automataDestinationCells = new boolean[height][width];
+		for(int step = 0; step < 10; step++) {
+			for(int y = 0; y < height; y++) {
+				for(int x = 0; x < width; x++) {
+					int neighbours = 0;
+					if(x > 0 && automataSourceCells[y][x - 1])
+						neighbours++;
+					if(x < width - 1 && automataSourceCells[y][x + 1])
+						neighbours++;
+					if(y > 0 && automataSourceCells[y - 1][x])
+						neighbours++;
+					if(y < height - 1 && automataSourceCells[y + 1][x])
+						neighbours++;
+					
+					if(neighbours == 0 || neighbours == 1)
+						automataDestinationCells[y][x] = false;
+					else if(neighbours == 3 || neighbours == 4)
+						automataDestinationCells[y][x] = true;
+					else
+						automataDestinationCells[y][x] = automataSourceCells[y][x];
+				}
+			}
+
+			boolean[][] temp = automataSourceCells;
+			automataSourceCells = automataDestinationCells;
+			automataDestinationCells = temp;
+		}
+
+		// convert cellular automata cells from true false into mountains and deep sea
+		int[][] sourceElevations = new int[height][width];
+		for(int y = 0; y < height; y++)
+			for(int x = 0; x < width; x++)
+				sourceElevations[y][x] = automataSourceCells[y][x] ? 4 : -4;
+
+		// smooth out the map
+		for(int y = 0; y < height; y++) {
+			for(int x = 0; x < width; x++) {
+				int total = 0;
+				int spread = 3;
+				for(int dy = -spread; dy <= spread; dy++) {
+					for(int dx = -spread; dx <= spread; dx++) {
+						if(x + dx >= 0 && x + dx < width && y + dy >= 0 && y + dy < height) {
+							total += sourceElevations[y + dy][x + dx];
+						} else {
+							total--;
+						}
+					}
+				}
+				
+				// take the average height in this square
+				float elevation = total / (float) ((spread * 2 + 1) * (spread * 2 + 1));
+
+				cells[y][x].setElevation(elevation < -4 ? -4 : elevation > 4 ? 4 : Math.round(elevation));
 			}
 		}
 	}

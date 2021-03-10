@@ -49,6 +49,10 @@ public class Client implements Runnable {
 		return player;
 	}
 
+	public Board getBoard() {
+		return board;
+	}
+
 	public void addOnConnectListener(Listener listener) {
 		onConnectListeners.add(listener);
 	}
@@ -127,7 +131,8 @@ public class Client implements Runnable {
 					case 3: {
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
-						board = new Board(boardWidth, boardHeight);
+						board = new Board(boardWidth, boardHeight, true);
+						System.out.println(boardWidth + ", " + boardHeight);
 						onGameStartListeners.on();
 						break;
 					}

@@ -36,7 +36,7 @@ public class XBattle {
 		jTabbedPane.addTab("Client", new ClientPanel());
 		jFrame.setContentPane(jTabbedPane);
 
-		jFrame.setSize(600, 600);
+		jFrame.setSize(600, 800);
 		jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		jFrame.setLocationRelativeTo(null);
 		jFrame.setVisible(true);

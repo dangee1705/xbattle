@@ -249,6 +249,10 @@ public class Server implements Runnable {
 	}
 
 	public void sendGameStart() throws IOException {
+		// TODO: move this
+		System.out.println(boardWidth + ", " + boardHeight);
+		board = new Board(boardWidth, boardHeight, true);
+
 		// make sure that all the players have selected a colour
 		for(Player player : players)
 			if(player.getColorId() == -1)
@@ -290,7 +294,8 @@ public class Server implements Runnable {
 
 	@Override
 	public void run() {
-		board = new Board(boardWidth, boardHeight);
+		// TODO: change this
+		board = new Board(boardWidth, boardHeight, true);
 		clientHandlers = new ArrayList<>();
 
 		try {

@@ -127,8 +127,13 @@ public class ClientPanel extends JPanel {
 			colorComboBox.setSelectedIndex(client.getPlayer().getColorId() + 1);
 		}));
 
-		client.addOnGameStartListener(() -> {
+		
+		JPanel gamePanel = new JPanel();
+		wrapperPanel.add(gamePanel);
+
+		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
+			gamePanel.add(new BoardPanel(client.getBoard()));
 			System.out.println("client panel recieved game start");
-		});
+		}));
 	}
 }

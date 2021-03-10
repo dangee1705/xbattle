@@ -28,6 +28,8 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 	private JList<ClientHandler> clientList;
 
 	private Server server;
+	// TODO: hide lobby panel when server is not on
+	private JPanel lobbyPanel;
 
 	public ServerPanel() {
 		server = new Server();
@@ -40,21 +42,22 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 
 		JPanel settingsPanel = new JPanel(new GridLayout(3, 2, 10, 10));
 		settingsPanel.add(new JLabel("Board Width"));
-		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
+		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
 		settingsPanel.add(boardWidthSpinner);
 		settingsPanel.add(new JLabel("Board Height"));
-		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
+		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
 		settingsPanel.add(boardHeightSpinner);
 		settingsPanel.add(new JLabel("Ticks Per Second"));
 		JSpinner ticksPerSecondSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 500, 1));
 		settingsPanel.add(ticksPerSecondSpinner);
 		wrapperPanel.add(settingsPanel);
 
+		// TODO: stop server too
 		JButton startServerButton = new JButton("Start Server");
 		startServerButton.setAlignmentX(CENTER_ALIGNMENT);
 		wrapperPanel.add(startServerButton);
 
-		JPanel lobbyPanel = new JPanel();
+		lobbyPanel = new JPanel();
 		lobbyPanel.setLayout(new BorderLayout());
 		clientListModel = new DefaultListModel<>();
 		clientList = new JList<>(clientListModel);
@@ -87,6 +90,8 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 			startServerButton.setEnabled(true);
 		}));
 		startGameButton.addActionListener(event -> {
+			server.setBoardWidth((int) boardWidthSpinner.getValue());
+			server.setBoardHeight((int) boardHeightSpinner.getValue());
 			try {
 				server.sendGameStart();
 			} catch(IOException e) {
