@@ -18,7 +18,7 @@ public class Board {
 		}
 	}
 
-	public Board(int width, int height, boolean gen) {
+	public Board(int width, int height, float threshold, int steps) {
 		this(width, height);
 
 		// create a completely random set of cells
@@ -26,12 +26,11 @@ public class Board {
 		Random random = new Random();
 		for(int y = 0; y < height; y++)
 			for(int x = 0; x < width; x++)
-				// TODO: make this threshold modifiable
-				automataSourceCells[y][x] = random.nextFloat() > 0.5; 
+				automataSourceCells[y][x] = random.nextFloat() > threshold; 
 		
 		// run the cellular automata
 		boolean[][] automataDestinationCells = new boolean[height][width];
-		for(int step = 0; step < 10; step++) {
+		for(int step = 0; step < steps; step++) {
 			for(int y = 0; y < height; y++) {
 				for(int x = 0; x < width; x++) {
 					int neighbours = 0;
@@ -81,7 +80,6 @@ public class Board {
 				
 				// take the average height in this square
 				float elevation = total / (float) ((spread * 2 + 1) * (spread * 2 + 1));
-
 				cells[y][x].setElevation(elevation < -4 ? -4 : elevation > 4 ? 4 : Math.round(elevation));
 			}
 		}

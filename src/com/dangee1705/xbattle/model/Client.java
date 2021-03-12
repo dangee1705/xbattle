@@ -1,5 +1,6 @@
 package com.dangee1705.xbattle.model;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -73,7 +74,7 @@ public class Client implements Runnable {
 	public void run() {
 		try {
 			socket = new Socket(serverAddress, serverPort);
-			dataInputStream = new DataInputStream(socket.getInputStream());
+			dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
 			dataOutputStream = new DataOutputStream(socket.getOutputStream());
 		} catch(IOException e) {
 			running = false;
@@ -131,8 +132,7 @@ public class Client implements Runnable {
 					case 3: {
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
-						board = new Board(boardWidth, boardHeight, true);
-						System.out.println(boardWidth + ", " + boardHeight);
+						board = new Board(boardWidth, boardHeight);
 						onGameStartListeners.on();
 						break;
 					}
@@ -146,7 +146,14 @@ public class Client implements Runnable {
 						for(int i = 0; i < 4; i++)
 							paths[i] = dataInputStream.readBoolean();
 						int base = dataInputStream.readInt();
-						// TODO: update cell on board
+
+						Cell cell = board.getCell(x, y);
+						cell.setTroops(troops);
+						// cell.setOwner(owner);
+						cell.setElevation(elevation);
+						for(int i = 0; i < 4; i++)
+							cell.setPath(i, paths[i]);
+						cell.setBase(base);
 						break;
 					}
 					case 5: {
@@ -157,7 +164,7 @@ public class Client implements Runnable {
 
 					default:
 						// TODO: handle message of wrong type
-						System.out.println("wrong message type");
+						System.out.println("wrong message type" + b);
 						break;
 				}
 			} catch(IOException e) {

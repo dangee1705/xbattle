@@ -186,18 +186,17 @@ public class Server implements Runnable {
 		public void sendHello() throws IOException {
 			dataOutputStream.writeByte(0);
 			dataOutputStream.writeInt(player.getId());
+			dataOutputStream.flush();
 		}
 
 		public void sendPlayerUpdate(Player player) throws IOException {
 			dataOutputStream.writeByte(1);
 			dataOutputStream.writeInt(player.getId());
-			// dataOutputStream.writeInt(player.getName().length());
-			// dataOutputStream.writeBytes(player.getName());
 			byte[] nameBytes = player.getName().getBytes();
 			dataOutputStream.writeInt(nameBytes.length);
 			dataOutputStream.write(nameBytes);
-			
 			dataOutputStream.writeInt(player.getColorId());
+			dataOutputStream.flush();
 		}
 
 		public void sendAllPlayers() throws IOException {
@@ -208,12 +207,14 @@ public class Server implements Runnable {
 		public void sendPlayerLeft(Player player) throws IOException {
 			dataOutputStream.writeByte(2);
 			dataOutputStream.writeInt(player.getId());
+			dataOutputStream.flush();
 		}
 
 		public void sendGameStart() throws IOException {
 			dataOutputStream.writeByte(3);
 			dataOutputStream.writeInt(board.getWidth());
 			dataOutputStream.writeInt(board.getHeight());
+			dataOutputStream.flush();
 		}
 
 		public void sendCellUpdate(Cell cell) throws IOException {
@@ -226,11 +227,14 @@ public class Server implements Runnable {
 			for(boolean path : cell.getPaths())
 				dataOutputStream.writeBoolean(path);
 			dataOutputStream.writeInt(cell.getBase());
+			dataOutputStream.flush();
+			cell.setHasUpdate(false);
 		}
 
 		public void sendGameEnd(Player player) throws IOException {
 			dataOutputStream.writeByte(5);
 			dataOutputStream.writeInt(player.getId());
+			dataOutputStream.flush();
 		}
 
 		public void sendBoard() throws IOException {
@@ -238,21 +242,14 @@ public class Server implements Runnable {
 		}
 
 		public void sendBoard(boolean updatesOnly) throws IOException {
-			for(int y = 0; y < board.getHeight(); y++) {
-				for(int x = 0; x < board.getWidth(); x++) {
-					if(!updatesOnly || board.getCell(x, y).getHasUpdate()) {
+			for(int y = 0; y < board.getHeight(); y++)
+				for(int x = 0; x < board.getWidth(); x++)
+					if(!updatesOnly || board.getCell(x, y).getHasUpdate())
 						sendCellUpdate(board.getCell(x, y));
-					}
-				}
-			}
 		}
 	}
 
 	public void sendGameStart() throws IOException {
-		// TODO: move this
-		System.out.println(boardWidth + ", " + boardHeight);
-		board = new Board(boardWidth, boardHeight, true);
-
 		// make sure that all the players have selected a colour
 		for(Player player : players)
 			if(player.getColorId() == -1)
@@ -292,14 +289,17 @@ public class Server implements Runnable {
 		onClientDisconnectListeners.add(listener);
 	}
 
+	private boolean inLobbyPhase;
+
 	@Override
 	public void run() {
-		// TODO: change this
-		board = new Board(boardWidth, boardHeight, true);
-		clientHandlers = new ArrayList<>();
+		// generate the board
+		board = new Board(boardWidth, boardHeight, 0.5f, 10);
 
+		clientHandlers = new ArrayList<>();
 		try {
 			serverSocket = new ServerSocket(XBattle.DEFAULT_PORT);
+			serverSocket.setSoTimeout(500);
 		} catch (IOException e) {
 			running = false;
 			onStartErrorListeners.on();
@@ -310,8 +310,8 @@ public class Server implements Runnable {
 		onStartListeners.on();
 
 		int nextPlayerId = 0;
-
-		while(running) {
+		inLobbyPhase = true;
+		while(inLobbyPhase) {
 			try {
 				Socket socket = serverSocket.accept();
 				Player player = new Player(nextPlayerId++, "Player " + nextPlayerId, -1);
@@ -320,9 +320,8 @@ public class Server implements Runnable {
 				players.add(player);
 
 				onClientConnectListeners.on();
-				clientHandler.sendHello();
+				// clientHandler.sendHello();
 			} catch(IOException e) {
-				e.printStackTrace();
 				continue;
 			}
 		}
@@ -335,10 +334,21 @@ public class Server implements Runnable {
 			e.printStackTrace();
 		}
 
-		// while(true) {
-		// 	sendBoard();
-		// }
-		
-		onStopListeners.on();
+		while(true) {
+			try {
+				board.update();
+				sendBoard(true);
+				Thread.sleep(1000 / ticksPerSecond);
+			} catch (Exception e) {
+				
+			}
+			
+		}
+
+		// onStopListeners.on();
+	}
+
+	public void startGame() {
+		inLobbyPhase = false;
 	}
 }

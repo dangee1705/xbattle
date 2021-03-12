@@ -57,6 +57,14 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		startServerButton.setAlignmentX(CENTER_ALIGNMENT);
 		wrapperPanel.add(startServerButton);
 
+		startServerButton.addActionListener(event -> {
+			server.setBoardWidth((int) boardWidthSpinner.getValue());
+			server.setBoardHeight((int) boardHeightSpinner.getValue());
+			startServerButton.setEnabled(false);
+			startServerButton.setText("Starting...");
+			server.start();
+		});
+
 		lobbyPanel = new JPanel();
 		lobbyPanel.setLayout(new BorderLayout());
 		clientListModel = new DefaultListModel<>();
@@ -70,11 +78,6 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		startGameButton.setAlignmentX(CENTER_ALIGNMENT);
 		wrapperPanel.add(startGameButton);
 
-		startServerButton.addActionListener(event -> {
-			startServerButton.setEnabled(false);
-			startServerButton.setText("Starting...");
-			server.start();
-		});
 		server.addOnStartListener(() -> SwingUtilities.invokeLater(() -> {
 			startServerButton.setEnabled(false);
 			startServerButton.setText("Running");
@@ -90,13 +93,7 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 			startServerButton.setEnabled(true);
 		}));
 		startGameButton.addActionListener(event -> {
-			server.setBoardWidth((int) boardWidthSpinner.getValue());
-			server.setBoardHeight((int) boardHeightSpinner.getValue());
-			try {
-				server.sendGameStart();
-			} catch(IOException e) {
-				e.printStackTrace();
-			}
+			server.startGame();
 		});
 	}
 

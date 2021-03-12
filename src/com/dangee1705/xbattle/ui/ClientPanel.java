@@ -128,12 +128,12 @@ public class ClientPanel extends JPanel {
 		}));
 
 		
-		JPanel gamePanel = new JPanel();
+		JPanel gamePanel = new JPanel(new BorderLayout());
 		wrapperPanel.add(gamePanel);
 
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
-			gamePanel.add(new BoardPanel(client.getBoard()));
-			System.out.println("client panel recieved game start");
+			// TODO: change this
+			gamePanel.add(new BoardPanel(client.getBoard()), BorderLayout.CENTER);
 		}));
 	}
 }

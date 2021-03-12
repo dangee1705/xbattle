@@ -24,16 +24,8 @@ public class Cell {
 		return x;
 	}
 
-	public void setX(int x) {
-		this.x = x;
-	}
-
 	public int getY() {
 		return y;
-	}
-
-	public void setY(int y) {
-		this.y = y;
 	}
 
 	public int getTroops() {
@@ -41,7 +33,10 @@ public class Cell {
 	}
 
 	public void setTroops(int troops) {
-		this.troops = troops;
+		if(troops != this.troops) {
+			this.troops = troops;
+			hasUpdate = true;
+		}
 	}
 
 	public Player getOwner() {
@@ -49,7 +44,10 @@ public class Cell {
 	}
 
 	public void setOwner(Player owner) {
-		this.owner = owner;
+		if(owner != this.owner) {
+			this.owner = owner;
+			hasUpdate = true;
+		}
 	}
 
 	public int getElevation() {
@@ -57,7 +55,10 @@ public class Cell {
 	}
 
 	public void setElevation(int elevation) {
-		this.elevation = elevation;
+		if(elevation != this.elevation) {
+			this.elevation = elevation;
+			hasUpdate = true;
+		}
 	}
 
 	public boolean[] getPaths() {
@@ -65,7 +66,10 @@ public class Cell {
 	}
 
 	public void setPath(int direction, boolean active) {
-		this.paths[direction] = active;
+		if(active != this.paths[direction]) {
+			this.paths[direction] = active;
+			hasUpdate = true;
+		}
 	}
 
 	public int getBase() {
@@ -73,7 +77,10 @@ public class Cell {
 	}
 
 	public void setBase(int base) {
-		this.base = base;
+		if(base != this.base) {
+			this.base = base;
+			hasUpdate = true;
+		}
 	}
 
 	public boolean getHasUpdate() {
