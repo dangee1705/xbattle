@@ -1,9 +1,12 @@
 package com.dangee1705.xbattle.ui;
 
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
 import javax.swing.JPanel;
 
@@ -12,8 +15,7 @@ import com.dangee1705.xbattle.model.Board;
 public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = -8094612097000197130L;
 
-	private float ZOOM = 1;
-	private static final int TILE_SIZE = 10;
+	private static final int TILE_SIZE = 50;
 
 	private Board board;
 
@@ -21,13 +23,11 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	private int lastMousePressY = 0;
 	private int offsetX = 0;
 	private int offsetY = 0;
+	private int mouseX = 0;
+	private int mouseY = 0;
 
 	public BoardPanel(Board board) {
 		this.board = board;
-
-		setMinimumSize(new Dimension(100, 800));
-		setPreferredSize(new Dimension(Integer.MAX_VALUE, 800));
-		setMaximumSize(new Dimension(Integer.MAX_VALUE, 800));
 
 		addMouseWheelListener(this);
 		addMouseListener(this);
@@ -78,10 +78,16 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 					colorLerp(new Color(0, 255, 0), new Color(127, 127, 0), elevation / 4f)
 				);
 
-				// g.fillRect((TILE_SIZE + 1) * x + 1, (TILE_SIZE + 1) * y + 1, TILE_SIZE, TILE_SIZE);
-				g.fillRect((int) (ZOOM * (x * TILE_SIZE - offsetX)), (int) (ZOOM * (y * TILE_SIZE - offsetY)), (int) (ZOOM * TILE_SIZE), (int) (ZOOM * TILE_SIZE));
+				g.fillRect(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE);
 			}
 		}
+
+		g.setColor(Color.WHITE);
+		int cursorThickness = 5;
+		g.fillRect((mouseX / TILE_SIZE) * TILE_SIZE - offsetX, (mouseY / TILE_SIZE) * TILE_SIZE - offsetY, TILE_SIZE, cursorThickness);
+		g.fillRect((mouseX / TILE_SIZE) * TILE_SIZE - offsetX, (mouseY / TILE_SIZE) * TILE_SIZE - offsetY, cursorThickness, TILE_SIZE);
+		g.fillRect((mouseX / TILE_SIZE) * TILE_SIZE + TILE_SIZE - cursorThickness - offsetX, (mouseY / TILE_SIZE) * TILE_SIZE - offsetY, cursorThickness, TILE_SIZE);
+		g.fillRect((mouseX / TILE_SIZE) * TILE_SIZE - offsetX, (mouseY / TILE_SIZE) * TILE_SIZE + TILE_SIZE - cursorThickness - offsetY, TILE_SIZE, cursorThickness);
 	}
 
 	private int clamp(int value, int min, int max) {
@@ -145,6 +151,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		
+		mouseX = e.getX() + offsetX;
+		mouseY = e.getY() + offsetY;
 	}
 }

@@ -36,7 +36,7 @@ public class ClientPanel extends JPanel {
 
 		JPanel settingsPanel = new JPanel(new GridLayout(2, 2, 10, 10));
 		settingsPanel.add(new JLabel("Server Address"));
-		serverAddressComboBox = new JComboBox<>( );
+		serverAddressComboBox = new JComboBox<>();
 		serverAddressComboBox.setEditable(true);
 		serverAddressComboBox.addItem("localhost");
 		settingsPanel.add(serverAddressComboBox);
@@ -128,12 +128,11 @@ public class ClientPanel extends JPanel {
 		}));
 
 		
-		JPanel gamePanel = new JPanel(new BorderLayout());
-		wrapperPanel.add(gamePanel);
+		// JPanel gamePanel = new JPanel(new BorderLayout());
+		// wrapperPanel.add(gamePanel);
 
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
-			// TODO: change this
-			gamePanel.add(new BoardPanel(client.getBoard()), BorderLayout.CENTER);
+			add(new BoardPanel(client.getBoard()), BorderLayout.CENTER);
 		}));
 	}
 }

@@ -281,6 +281,10 @@ public class Server implements Runnable {
 		return clientHandlers;
 	}
 
+	public ArrayList<Player> getPlayers() {
+		return players;
+	}
+
 	public void addOnClientConnectListener(Listener listener) {
 		onClientConnectListeners.add(listener);
 	}

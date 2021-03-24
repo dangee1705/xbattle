@@ -4,13 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
@@ -78,6 +78,14 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		startGameButton.setAlignmentX(CENTER_ALIGNMENT);
 		wrapperPanel.add(startGameButton);
 
+		startGameButton.addActionListener(event -> {
+			if(server.getPlayers().size() == 0) {
+				JOptionPane.showMessageDialog(this, "No Players Connected!", "Error", JOptionPane.ERROR_MESSAGE);
+			} else {
+				server.startGame();
+			}
+		});
+
 		server.addOnStartListener(() -> SwingUtilities.invokeLater(() -> {
 			startServerButton.setEnabled(false);
 			startServerButton.setText("Running");
@@ -92,9 +100,6 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 			startServerButton.setText("Start Server");
 			startServerButton.setEnabled(true);
 		}));
-		startGameButton.addActionListener(event -> {
-			server.startGame();
-		});
 	}
 
 	public void updateClientList() {
