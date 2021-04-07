@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import com.dangee1705.xbattle.ui.XBattle;
 
 public class Server implements Runnable {
-	private int boardWidth = 10;
-	private int boardHeight = 10;
+	private int boardWidth = 0;
+	private int boardHeight = 0;
 	private int ticksPerSecond = 5;
 	private boolean running = false;
 	private Thread thread = null;
@@ -26,6 +26,7 @@ public class Server implements Runnable {
 	private Listeners onClientConnectListeners = new Listeners();
 	private Listeners onClientDisconnectListeners = new Listeners();
 	private Listeners onStopListeners = new Listeners();
+	private Listeners onGameStartListeners = new Listeners();
 
 	public int getBoardWidth() {
 		return boardWidth;
@@ -78,6 +79,10 @@ public class Server implements Runnable {
 
 	public void addOnStopListener(Listener listener) {
 		onStopListeners.add(listener);
+	}
+
+	public void addOnGameStartListener(Listener listener) {
+		onGameStartListeners.add(listener);
 	}
 
 	public class ClientHandler implements Runnable {
@@ -184,19 +189,23 @@ public class Server implements Runnable {
 		}
 
 		public void sendHello() throws IOException {
-			dataOutputStream.writeByte(0);
-			dataOutputStream.writeInt(player.getId());
-			dataOutputStream.flush();
+			synchronized(dataOutputStream) {
+				dataOutputStream.writeByte(0);
+				dataOutputStream.writeInt(player.getId());
+				dataOutputStream.flush();
+			}
 		}
 
 		public void sendPlayerUpdate(Player player) throws IOException {
-			dataOutputStream.writeByte(1);
-			dataOutputStream.writeInt(player.getId());
-			byte[] nameBytes = player.getName().getBytes();
-			dataOutputStream.writeInt(nameBytes.length);
-			dataOutputStream.write(nameBytes);
-			dataOutputStream.writeInt(player.getColorId());
-			dataOutputStream.flush();
+			synchronized(dataOutputStream) {
+				dataOutputStream.writeByte(1);
+				dataOutputStream.writeInt(player.getId());
+				byte[] nameBytes = player.getName().getBytes();
+				dataOutputStream.writeInt(nameBytes.length);
+				dataOutputStream.write(nameBytes);
+				dataOutputStream.writeInt(player.getColorId());
+				dataOutputStream.flush();
+			}
 		}
 
 		public void sendAllPlayers() throws IOException {
@@ -205,36 +214,45 @@ public class Server implements Runnable {
 		}
 
 		public void sendPlayerLeft(Player player) throws IOException {
-			dataOutputStream.writeByte(2);
-			dataOutputStream.writeInt(player.getId());
-			dataOutputStream.flush();
+			synchronized(dataOutputStream) {
+				dataOutputStream.writeByte(2);
+				dataOutputStream.writeInt(player.getId());
+				dataOutputStream.flush();
+			}
 		}
 
 		public void sendGameStart() throws IOException {
-			dataOutputStream.writeByte(3);
-			dataOutputStream.writeInt(board.getWidth());
-			dataOutputStream.writeInt(board.getHeight());
-			dataOutputStream.flush();
+			synchronized(dataOutputStream) {
+				dataOutputStream.writeByte(3);
+				dataOutputStream.writeInt(board.getWidth());
+				dataOutputStream.writeInt(board.getHeight());
+				dataOutputStream.flush();
+			}
 		}
 
 		public void sendCellUpdate(Cell cell) throws IOException {
-			dataOutputStream.writeByte(4);
-			dataOutputStream.writeInt(cell.getX());
-			dataOutputStream.writeInt(cell.getY());
-			dataOutputStream.writeInt(cell.getTroops());
-			dataOutputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
-			dataOutputStream.writeInt(cell.getElevation());
-			for(boolean path : cell.getPaths())
-				dataOutputStream.writeBoolean(path);
-			dataOutputStream.writeInt(cell.getBase());
-			dataOutputStream.flush();
-			cell.setHasUpdate(false);
+			synchronized(dataOutputStream) {
+				System.out.println("sending cell <" + cell.getX() + ", " + cell.getY() + ">");
+				dataOutputStream.writeByte(4);
+				dataOutputStream.writeInt(cell.getX());
+				dataOutputStream.writeInt(cell.getY());
+				dataOutputStream.writeInt(cell.getTroops());
+				dataOutputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
+				dataOutputStream.writeInt(cell.getElevation());
+				for(boolean path : cell.getPaths())
+					dataOutputStream.writeBoolean(path);
+				dataOutputStream.writeInt(cell.getBase());
+				dataOutputStream.flush();
+				cell.setHasUpdate(false);
+			}
 		}
 
 		public void sendGameEnd(Player player) throws IOException {
-			dataOutputStream.writeByte(5);
-			dataOutputStream.writeInt(player.getId());
-			dataOutputStream.flush();
+			synchronized(dataOutputStream) {
+				dataOutputStream.writeByte(5);
+				dataOutputStream.writeInt(player.getId());
+				dataOutputStream.flush();
+			}
 		}
 
 		public void sendBoard() throws IOException {
@@ -331,9 +349,16 @@ public class Server implements Runnable {
 		}
 
 		try {
-			// this will tell each client the game is starting, then send the board to them
+			serverSocket.close();
+		} catch (IOException e) {
+			
+		}
+
+		onGameStartListeners.on();
+
+		try {
+			// this will tell each client the game is starting
 			sendGameStart();
-			sendBoard();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
@@ -346,7 +371,6 @@ public class Server implements Runnable {
 			} catch (Exception e) {
 				
 			}
-			
 		}
 
 		// onStopListeners.on();

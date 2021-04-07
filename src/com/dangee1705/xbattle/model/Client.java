@@ -50,6 +50,13 @@ public class Client implements Runnable {
 		return player;
 	}
 
+	private Player getPlayerById(int playerId) {
+		for(Player player : players)
+			if(player.getId() == playerId)
+				return player;
+		return null;
+	}
+
 	public Board getBoard() {
 		return board;
 	}
@@ -58,7 +65,7 @@ public class Client implements Runnable {
 		onConnectListeners.add(listener);
 	}
 
-	public void addOnConnetErrorListener(Listener listener) {
+	public void addOnConnectErrorListener(Listener listener) {
 		onConnectErrorListeners.add(listener);
 	}
 
@@ -79,7 +86,6 @@ public class Client implements Runnable {
 		} catch(IOException e) {
 			running = false;
 			onConnectErrorListeners.on();
-			e.printStackTrace();
 			return;
 		}
 
@@ -149,7 +155,7 @@ public class Client implements Runnable {
 
 						Cell cell = board.getCell(x, y);
 						cell.setTroops(troops);
-						// cell.setOwner(owner);
+						cell.setOwner(getPlayerById(ownerId));
 						cell.setElevation(elevation);
 						for(int i = 0; i < 4; i++)
 							cell.setPath(i, paths[i]);
@@ -181,22 +187,24 @@ public class Client implements Runnable {
 	}
 
 	public void sendPlayerUpdate() throws IOException {
-		dataOutputStream.writeByte(0);
-		// dataOutputStream.writeInt(player.getName().length());
-		// dataOutputStream.writeBytes(player.getName());
-		byte[] nameBytes = player.getName().getBytes();
-		dataOutputStream.writeInt(nameBytes.length);
-		dataOutputStream.write(nameBytes);
-		dataOutputStream.writeInt(player.getColorId());
+		synchronized(dataOutputStream) {
+			dataOutputStream.writeByte(0);
+			byte[] nameBytes = player.getName().getBytes();
+			dataOutputStream.writeInt(nameBytes.length);
+			dataOutputStream.write(nameBytes);
+			dataOutputStream.writeInt(player.getColorId());
+		}
 	}
 
 	public void sendCellUpdate(Cell cell) throws IOException {
-		dataOutputStream.writeByte(1);
-		dataOutputStream.writeInt(cell.getX());
-		dataOutputStream.writeInt(cell.getY());
-		dataOutputStream.writeInt(cell.getElevation());
-		for(boolean path : cell.getPaths())
-			dataOutputStream.writeBoolean(path);
-		dataOutputStream.writeInt(cell.getBase());
+		synchronized(dataOutputStream) {
+			dataOutputStream.writeByte(1);
+			dataOutputStream.writeInt(cell.getX());
+			dataOutputStream.writeInt(cell.getY());
+			dataOutputStream.writeInt(cell.getElevation());
+			for(boolean path : cell.getPaths())
+				dataOutputStream.writeBoolean(path);
+			dataOutputStream.writeInt(cell.getBase());
+		}
 	}
 }

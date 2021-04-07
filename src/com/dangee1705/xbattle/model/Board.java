@@ -101,13 +101,13 @@ public class Board {
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
 				if(y == 0)
-					getCell(x, y).setPath(0, false);
+					getCell(x, y).setPath(Cell.NORTH, false);
 				else if(y == height - 1)
-					getCell(x, y).setPath(2, false);
+					getCell(x, y).setPath(Cell.SOUTH, false);
 				if(x == width - 1)
-					getCell(x, y).setPath(1, false);
+					getCell(x, y).setPath(Cell.EAST, false);
 				else if(x == 0)
-					getCell(x, y).setPath(3, false);
+					getCell(x, y).setPath(Cell.WEST, false);
 			}
 		}
 	}
@@ -129,13 +129,13 @@ public class Board {
 				int activePathCount = cell.getActivePathCount();
 				if(activePathCount > 0) {
 					int amountToMove = cell.getTroops() / activePathCount;
-					if(cell.getPaths()[1])
+					if(cell.getPaths()[Cell.EAST])
 						moveTroops(cell, getCell(x + 1, y), amountToMove);
-					if(cell.getPaths()[3])
+					if(cell.getPaths()[Cell.WEST])
 						moveTroops(cell, getCell(x - 1, y), amountToMove);
-					if(cell.getPaths()[0])
+					if(cell.getPaths()[Cell.NORTH])
 						moveTroops(cell, getCell(x, y + 1), amountToMove);
-					if(cell.getPaths()[2])
+					if(cell.getPaths()[Cell.SOUTH])
 						moveTroops(cell, getCell(x, y - 1), amountToMove);
 				}
 			}

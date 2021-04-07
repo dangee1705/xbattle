@@ -28,7 +28,6 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 	private JList<ClientHandler> clientList;
 
 	private Server server;
-	// TODO: hide lobby panel when server is not on
 	private JPanel lobbyPanel;
 
 	public ServerPanel() {
@@ -40,26 +39,29 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.PAGE_AXIS));
 		add(wrapperPanel, BorderLayout.PAGE_START);
 
-		JPanel settingsPanel = new JPanel(new GridLayout(3, 2, 10, 10));
-		settingsPanel.add(new JLabel("Board Width"));
+		JPanel settingsPanel = new JPanel(new BorderLayout());
+		JPanel settingsGridPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+		settingsGridPanel.add(new JLabel("Board Width"));
 		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
-		settingsPanel.add(boardWidthSpinner);
-		settingsPanel.add(new JLabel("Board Height"));
+		settingsGridPanel.add(boardWidthSpinner);
+		settingsGridPanel.add(new JLabel("Board Height"));
 		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
-		settingsPanel.add(boardHeightSpinner);
-		settingsPanel.add(new JLabel("Ticks Per Second"));
+		settingsGridPanel.add(boardHeightSpinner);
+		settingsGridPanel.add(new JLabel("Ticks Per Second"));
 		JSpinner ticksPerSecondSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 500, 1));
-		settingsPanel.add(ticksPerSecondSpinner);
-		wrapperPanel.add(settingsPanel);
+		settingsGridPanel.add(ticksPerSecondSpinner);
+		settingsPanel.add(settingsGridPanel, BorderLayout.CENTER);
 
 		// TODO: stop server too
 		JButton startServerButton = new JButton("Start Server");
-		startServerButton.setAlignmentX(CENTER_ALIGNMENT);
-		wrapperPanel.add(startServerButton);
+		settingsPanel.add(startServerButton, BorderLayout.PAGE_END);
+
+		wrapperPanel.add(settingsPanel);
 
 		startServerButton.addActionListener(event -> {
 			server.setBoardWidth((int) boardWidthSpinner.getValue());
 			server.setBoardHeight((int) boardHeightSpinner.getValue());
+			server.setTicksPerSecond((int) ticksPerSecondSpinner.getValue());
 			startServerButton.setEnabled(false);
 			startServerButton.setText("Starting...");
 			server.start();
@@ -72,33 +74,42 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		clientList.setCellRenderer(this);
 		JScrollPane clientListScrollPane = new JScrollPane(clientList);
 		lobbyPanel.add(clientListScrollPane, BorderLayout.CENTER);
+		lobbyPanel.setVisible(false);
 		wrapperPanel.add(lobbyPanel);
 
 		JButton startGameButton = new JButton("Start Game");
 		startGameButton.setAlignmentX(CENTER_ALIGNMENT);
-		wrapperPanel.add(startGameButton);
+		lobbyPanel.add(startGameButton, BorderLayout.PAGE_END);
 
 		startGameButton.addActionListener(event -> {
 			if(server.getPlayers().size() == 0) {
 				JOptionPane.showMessageDialog(this, "No Players Connected!", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
+				startGameButton.setEnabled(false);
+				startGameButton.setText("Game Starting...");
 				server.startGame();
 			}
 		});
-
 		server.addOnStartListener(() -> SwingUtilities.invokeLater(() -> {
 			startServerButton.setEnabled(false);
 			startServerButton.setText("Running");
+			lobbyPanel.setVisible(true);
 		}));
 		server.addOnStartErrorListener(() -> SwingUtilities.invokeLater(() -> {
 			startServerButton.setText("Start Server");
 			startServerButton.setEnabled(true);
+			lobbyPanel.setVisible(false);
 		}));
 		server.addOnClientConnectListener(() -> SwingUtilities.invokeLater(() -> updateClientList()));
 		server.addOnClientDisconnectListener(() -> SwingUtilities.invokeLater(() -> updateClientList()));
 		server.addOnStopListener(() -> SwingUtilities.invokeLater(() -> {
 			startServerButton.setText("Start Server");
 			startServerButton.setEnabled(true);
+			lobbyPanel.setVisible(false);
+		}));
+
+		server.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
+			startGameButton.setText("Game Started");
 		}));
 	}
 

@@ -2,8 +2,8 @@ package com.dangee1705.xbattle.ui;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.IOException;
 
 import javax.swing.BoxLayout;
@@ -34,22 +34,22 @@ public class ClientPanel extends JPanel {
 		wrapperPanel.setLayout(new BoxLayout(wrapperPanel, BoxLayout.PAGE_AXIS));
 		add(wrapperPanel, BorderLayout.PAGE_START);
 
-		JPanel settingsPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-		settingsPanel.add(new JLabel("Server Address"));
+		JPanel settingsPanel = new JPanel(new BorderLayout());
+		JPanel settingsGridPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+		settingsGridPanel.add(new JLabel("Server Address"));
 		serverAddressComboBox = new JComboBox<>();
 		serverAddressComboBox.setEditable(true);
 		serverAddressComboBox.addItem("localhost");
-		settingsPanel.add(serverAddressComboBox);
-		settingsPanel.add(new JLabel("Server Port"));
+		settingsGridPanel.add(serverAddressComboBox);
+		settingsGridPanel.add(new JLabel("Server Port"));
 		serverPortComboBox = new JComboBox<>();
 		serverPortComboBox.setEditable(true);
 		serverPortComboBox.addItem(XBattle.DEFAULT_PORT);
-		settingsPanel.add(serverPortComboBox);
-		wrapperPanel.add(settingsPanel);
-
+		settingsGridPanel.add(serverPortComboBox);
+		settingsPanel.add(settingsGridPanel, BorderLayout.CENTER);
 		JButton connectButton = new JButton("Connect");
-		connectButton.setAlignmentX(CENTER_ALIGNMENT);
-		wrapperPanel.add(connectButton);
+		settingsPanel.add(connectButton, BorderLayout.PAGE_END);
+		wrapperPanel.add(settingsPanel);
 
 		connectButton.addActionListener(event -> {
 			// set the server address and port specified by the user
@@ -67,7 +67,7 @@ public class ClientPanel extends JPanel {
 			connectButton.setText("Connected");
 			playerSettings.setVisible(true);
 		}));
-		client.addOnConnetErrorListener(() -> SwingUtilities.invokeLater(() -> {
+		client.addOnConnectErrorListener(() -> SwingUtilities.invokeLater(() -> {
 			connectButton.setEnabled(true);
 			connectButton.setText("Connect");
 		}));
@@ -75,17 +75,7 @@ public class ClientPanel extends JPanel {
 		playerSettings = new JPanel(new GridLayout(2, 2, 10, 10));
 		playerSettings.add(new JLabel("Name"));
 		JTextField nameTextField = new JTextField();
-		nameTextField.addKeyListener(new KeyListener() {
-			@Override
-			public void keyTyped(KeyEvent e) {
-				
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				
-			}
-
+		nameTextField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
 				// TODO: dont send after every keypress only on certain ones
@@ -96,7 +86,6 @@ public class ClientPanel extends JPanel {
 					
 				}
 			}
-			
 		});
 		playerSettings.add(nameTextField);
 		playerSettings.add(new JLabel("Colour"));
@@ -127,12 +116,10 @@ public class ClientPanel extends JPanel {
 			colorComboBox.setSelectedIndex(client.getPlayer().getColorId() + 1);
 		}));
 
-		
-		// JPanel gamePanel = new JPanel(new BorderLayout());
-		// wrapperPanel.add(gamePanel);
-
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
 			add(new BoardPanel(client.getBoard()), BorderLayout.CENTER);
+			settingsPanel.setVisible(false);
+			playerSettings.setVisible(false);
 		}));
 	}
 }
