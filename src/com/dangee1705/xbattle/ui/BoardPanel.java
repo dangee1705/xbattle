@@ -57,25 +57,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	@Override
 	protected void paintComponent(Graphics g1d) {
 		Graphics2D g = (Graphics2D) g1d;
-
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		// if(board.getWidth() * TILE_SIZE < getWidth()) {
-		// 	offsetX = (getWidth() - (board.getWidth() * TILE_SIZE)) / -2;
-		// } else {
-		// 	if(offsetX < 0)	
-		// 		offsetX = 0;
-		// 	if((board.getWidth() * TILE_SIZE) - offsetX < getWidth())
-		// 		offsetX = board.getWidth() * TILE_SIZE - getWidth();
-		// }
-		// if(board.getHeight() * TILE_SIZE < getHeight()) {
-		// 	offsetY = (getHeight() - (board.getHeight() * TILE_SIZE)) / -2;
-		// } else {
-		// 	if(offsetY < 0)
-		// 		offsetY = 0;
-		// 	if((board.getHeight() * TILE_SIZE) - offsetY < getHeight())
-		// 		offsetY = board.getHeight() * TILE_SIZE - getHeight();
-		// }
-
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		for(int y = 0; y < board.getHeight(); y++) {
@@ -93,48 +75,46 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 				g.setColor(Color.WHITE);
 				if(cell.getPath(Cell.NORTH))
 					g.fillPolygon(new int[]{
-						x * TILE_SIZE + TILE_SIZE / 2,
-						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
-						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+						x * TILE_SIZE + TILE_SIZE / 2 - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6 - offsetX
 					}, new int[]{
-						y * TILE_SIZE,
-						y * TILE_SIZE + TILE_SIZE / 4,
-						y * TILE_SIZE + TILE_SIZE / 4
+						y * TILE_SIZE - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 4 - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 4 - offsetY
 					}, 3);
 				if(cell.getPath(Cell.SOUTH))
 					g.fillPolygon(new int[]{
-						x * TILE_SIZE + TILE_SIZE / 2,
-						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
-						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+						x * TILE_SIZE + TILE_SIZE / 2 - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6 - offsetX
 					}, new int[]{
-						(y + 1) * TILE_SIZE,
-						(y + 1) * TILE_SIZE - TILE_SIZE / 4,
-						(y + 1) * TILE_SIZE - TILE_SIZE / 4
+						(y + 1) * TILE_SIZE - offsetY,
+						(y + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetY,
+						(y + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetY
 					}, 3);
 				if(cell.getPath(Cell.EAST))
 					g.fillPolygon(new int[]{
-						(x + 1) * TILE_SIZE,
-						(x + 1) * TILE_SIZE - TILE_SIZE / 4,
-						(x + 1) * TILE_SIZE - TILE_SIZE / 4
+						(x + 1) * TILE_SIZE - offsetX,
+						(x + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetX,
+						(x + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetX
 					}, new int[]{
-						y * TILE_SIZE + TILE_SIZE / 2,
-						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
-						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+						y * TILE_SIZE + TILE_SIZE / 2 - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6 - offsetY
 					}, 3);
 				if(cell.getPath(Cell.WEST))
 					g.fillPolygon(new int[]{
-						x * TILE_SIZE,
-						x * TILE_SIZE + TILE_SIZE / 4,
-						x * TILE_SIZE + TILE_SIZE / 4
+						x * TILE_SIZE - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 4 - offsetX,
+						x * TILE_SIZE + TILE_SIZE / 4 - offsetX
 					}, new int[]{
-						y * TILE_SIZE + TILE_SIZE / 2,
-						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
-						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+						y * TILE_SIZE + TILE_SIZE / 2 - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetY,
+						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6 - offsetY
 					}, 3);
 			}
 		}
-
-		
 
 		g.setColor(Color.WHITE);
 		int cursorThickness = 5;
@@ -171,11 +151,6 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		// System.out.println(ZOOM + ", " + offsetX + ", " + offsetY);
 	}
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		
-	}
-
 	private Listeners onCellUpdatedListeners = new Listeners();
 
 	public void addOnCellUpdatedListener(Listener listener) {
@@ -186,32 +161,39 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	public void mousePressed(MouseEvent e) {
 		lastMousePressX = e.getX() + offsetX;
 		lastMousePressY = e.getY() + offsetY;
-
-		int cellX = e.getX() / TILE_SIZE;
-		int cellY = e.getY() / TILE_SIZE;
-
-		int subX = (int) ((e.getX() - cellX * TILE_SIZE) / (TILE_SIZE / 3f));
-		int subY = (int) ((e.getY() - cellY * TILE_SIZE) / (TILE_SIZE / 3f));
-		
-		if(subY == 0 || subX == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-		}
-		if(subY == 2 || subX == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
-		}
-		if(subX == 0 || subY == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.WEST);
-		}
-		if(subX == 2 || subY == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.EAST);
-		}
-
-		onCellUpdatedListeners.on();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		int cellX = mouseX / TILE_SIZE;
+		int cellY = mouseY / TILE_SIZE;
+
+		if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight()) {
+			int subX = (int) ((mouseX - cellX * TILE_SIZE) / (TILE_SIZE / 3f));
+			int subY = (int) ((mouseY - cellY * TILE_SIZE) / (TILE_SIZE / 3f));
+			
+			if(subY == 0)
+				board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+			if(subY == 2)
+				board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+			if(subX == 0)
+				board.getCell(cellX, cellY).togglePath(Cell.WEST);
+			if(subX == 2)
+				board.getCell(cellX, cellY).togglePath(Cell.EAST);
+			if(subY == 1 && subX == 1) {
+				board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+				board.getCell(cellX, cellY).togglePath(Cell.EAST);
+				board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+				board.getCell(cellX, cellY).togglePath(Cell.WEST);
+			}
+
+			onCellUpdatedListeners.on();
+		}
 	}
 
 	@Override
@@ -226,8 +208,10 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		// offsetX = lastMousePressX - e.getX();
-		// offsetY = lastMousePressY - e.getY();
+		offsetX = lastMousePressX - e.getX();
+		offsetY = lastMousePressY - e.getY();
+		mouseX = e.getX() + offsetX;
+		mouseY = e.getY() + offsetY;
 	}
 
 	@Override

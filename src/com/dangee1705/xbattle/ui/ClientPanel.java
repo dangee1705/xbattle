@@ -123,7 +123,7 @@ public class ClientPanel extends JPanel {
 				try {
 					client.sendCellUpdates();
 				} catch (IOException e) {
-					// TODO: handle this error
+					e.printStackTrace();
 				}
 			});
 			settingsPanel.setVisible(false);

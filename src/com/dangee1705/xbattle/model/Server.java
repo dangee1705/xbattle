@@ -232,7 +232,6 @@ public class Server implements Runnable {
 
 		public void sendCellUpdate(Cell cell) throws IOException {
 			synchronized(dataOutputStream) {
-				System.out.println("sending cell <" + cell.getX() + ", " + cell.getY() + ">");
 				dataOutputStream.writeByte(4);
 				dataOutputStream.writeInt(cell.getX());
 				dataOutputStream.writeInt(cell.getY());

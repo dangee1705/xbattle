@@ -78,6 +78,7 @@ public class Cell {
 
 	public void togglePath(int direction) {
 		setPath(direction, !getPath(direction));
+		hasUpdate = true;
 	}
 
 	public int getBase() {

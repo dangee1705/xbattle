@@ -42,13 +42,13 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		JPanel settingsPanel = new JPanel(new BorderLayout());
 		JPanel settingsGridPanel = new JPanel(new GridLayout(3, 2, 10, 10));
 		settingsGridPanel.add(new JLabel("Board Width"));
-		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
+		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
 		settingsGridPanel.add(boardWidthSpinner);
 		settingsGridPanel.add(new JLabel("Board Height"));
-		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 100, 1));
+		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
 		settingsGridPanel.add(boardHeightSpinner);
 		settingsGridPanel.add(new JLabel("Ticks Per Second"));
-		JSpinner ticksPerSecondSpinner = new JSpinner(new SpinnerNumberModel(50, 1, 500, 1));
+		JSpinner ticksPerSecondSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 500, 1));
 		settingsGridPanel.add(ticksPerSecondSpinner);
 		settingsPanel.add(settingsGridPanel, BorderLayout.CENTER);
 

@@ -122,21 +122,23 @@ public class Board {
 	}
 
 	public void update() {
-		clearEdgePaths();
-		for(int y = 0; y < height; y++) {
-			for(int x = 0; x < width; x++) {
-				Cell cell = getCell(x, y);
-				int activePathCount = cell.getActivePathCount();
-				if(activePathCount > 0) {
-					int amountToMove = cell.getTroops() / activePathCount;
-					if(cell.getPaths()[Cell.EAST])
-						moveTroops(cell, getCell(x + 1, y), amountToMove);
-					if(cell.getPaths()[Cell.WEST])
-						moveTroops(cell, getCell(x - 1, y), amountToMove);
-					if(cell.getPaths()[Cell.NORTH])
-						moveTroops(cell, getCell(x, y + 1), amountToMove);
-					if(cell.getPaths()[Cell.SOUTH])
-						moveTroops(cell, getCell(x, y - 1), amountToMove);
+		synchronized(this) {
+			clearEdgePaths();
+			for(int y = 0; y < height; y++) {
+				for(int x = 0; x < width; x++) {
+					Cell cell = getCell(x, y);
+					int activePathCount = cell.getActivePathCount();
+					if(activePathCount > 0) {
+						int amountToMove = cell.getTroops() / activePathCount;
+						if(cell.getPath(Cell.EAST) && x > 0)
+							moveTroops(cell, getCell(x + 1, y), amountToMove);
+						if(cell.getPath(Cell.WEST) && x < getWidth() - 1)
+							moveTroops(cell, getCell(x - 1, y), amountToMove);
+						if(cell.getPath(Cell.NORTH) && y > 0)
+							moveTroops(cell, getCell(x, y - 1), amountToMove);
+						if(cell.getPath(Cell.SOUTH) && y < getHeight() - 1)
+							moveTroops(cell, getCell(x, y + 1), amountToMove);
+					}
 				}
 			}
 		}
