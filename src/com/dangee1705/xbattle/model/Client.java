@@ -207,4 +207,14 @@ public class Client implements Runnable {
 			dataOutputStream.writeInt(cell.getBase());
 		}
 	}
+
+	public void sendCellUpdates() throws IOException {
+		for(int y = 0; y < board.getHeight(); y++) {
+			for(int x = 0; x < board.getWidth(); x++) {
+				Cell cell = board.getCell(x, y);
+				if(cell.getHasUpdate())
+					sendCellUpdate(cell);
+			}
+		}
+	}
 }

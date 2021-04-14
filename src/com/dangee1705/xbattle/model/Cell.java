@@ -65,11 +65,19 @@ public class Cell {
 		return paths;
 	}
 
+	public boolean getPath(int direction) {
+		return paths[direction];
+	}
+
 	public void setPath(int direction, boolean active) {
-		if(active != this.paths[direction]) {
-			this.paths[direction] = active;
+		if(active != paths[direction]) {
+			paths[direction] = active;
 			hasUpdate = true;
 		}
+	}
+
+	public void togglePath(int direction) {
+		setPath(direction, !getPath(direction));
 	}
 
 	public int getBase() {

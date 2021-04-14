@@ -2,6 +2,8 @@ package com.dangee1705.xbattle.ui;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -11,6 +13,9 @@ import java.awt.event.MouseWheelListener;
 import javax.swing.JPanel;
 
 import com.dangee1705.xbattle.model.Board;
+import com.dangee1705.xbattle.model.Cell;
+import com.dangee1705.xbattle.model.Listener;
+import com.dangee1705.xbattle.model.Listeners;
 
 public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener {
 	private static final long serialVersionUID = -8094612097000197130L;
@@ -33,7 +38,8 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		addMouseListener(this);
 		addMouseMotionListener(this);
 
-		(new Thread(this)).start();
+		Thread thread = new Thread(this, "Board-Panel-Thread");
+		thread.start();
 	}
 
 	@Override
@@ -49,29 +55,33 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	}
 
 	@Override
-	protected void paintComponent(Graphics g) {
-		if(board.getWidth() * TILE_SIZE < getWidth()) {
-			offsetX = (getWidth() - (board.getWidth() * TILE_SIZE)) / -2;
-		} else {
-			if(offsetX < 0)
-				offsetX = 0;
-			if((board.getWidth() * TILE_SIZE) - offsetX < getWidth())
-				offsetX = board.getWidth() * TILE_SIZE - getWidth();
-		}
-		if(board.getHeight() * TILE_SIZE < getHeight()) {
-			offsetY = (getHeight() - (board.getHeight() * TILE_SIZE)) / -2;
-		} else {
-			if(offsetY < 0)
-				offsetY = 0;
-			if((board.getHeight() * TILE_SIZE) - offsetY < getHeight())
-				offsetY = board.getHeight() * TILE_SIZE - getHeight();
-		}
+	protected void paintComponent(Graphics g1d) {
+		Graphics2D g = (Graphics2D) g1d;
+
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		// if(board.getWidth() * TILE_SIZE < getWidth()) {
+		// 	offsetX = (getWidth() - (board.getWidth() * TILE_SIZE)) / -2;
+		// } else {
+		// 	if(offsetX < 0)	
+		// 		offsetX = 0;
+		// 	if((board.getWidth() * TILE_SIZE) - offsetX < getWidth())
+		// 		offsetX = board.getWidth() * TILE_SIZE - getWidth();
+		// }
+		// if(board.getHeight() * TILE_SIZE < getHeight()) {
+		// 	offsetY = (getHeight() - (board.getHeight() * TILE_SIZE)) / -2;
+		// } else {
+		// 	if(offsetY < 0)
+		// 		offsetY = 0;
+		// 	if((board.getHeight() * TILE_SIZE) - offsetY < getHeight())
+		// 		offsetY = board.getHeight() * TILE_SIZE - getHeight();
+		// }
 
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, getWidth(), getHeight());
 		for(int y = 0; y < board.getHeight(); y++) {
 			for(int x = 0; x < board.getWidth(); x++) {
-				int elevation = board.getCell(x, y).getElevation();
+				Cell cell = board.getCell(x, y);
+				int elevation = cell.getElevation();
 				g.setColor(
 					elevation < 0 ?
 					colorLerp(new Color(0, 0, 100), new Color(0, 0, 255), (elevation + 4) / 3f) :
@@ -79,8 +89,52 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 				);
 
 				g.fillRect(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE);
+
+				g.setColor(Color.WHITE);
+				if(cell.getPath(Cell.NORTH))
+					g.fillPolygon(new int[]{
+						x * TILE_SIZE + TILE_SIZE / 2,
+						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
+						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+					}, new int[]{
+						y * TILE_SIZE,
+						y * TILE_SIZE + TILE_SIZE / 4,
+						y * TILE_SIZE + TILE_SIZE / 4
+					}, 3);
+				if(cell.getPath(Cell.SOUTH))
+					g.fillPolygon(new int[]{
+						x * TILE_SIZE + TILE_SIZE / 2,
+						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
+						x * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+					}, new int[]{
+						(y + 1) * TILE_SIZE,
+						(y + 1) * TILE_SIZE - TILE_SIZE / 4,
+						(y + 1) * TILE_SIZE - TILE_SIZE / 4
+					}, 3);
+				if(cell.getPath(Cell.EAST))
+					g.fillPolygon(new int[]{
+						(x + 1) * TILE_SIZE,
+						(x + 1) * TILE_SIZE - TILE_SIZE / 4,
+						(x + 1) * TILE_SIZE - TILE_SIZE / 4
+					}, new int[]{
+						y * TILE_SIZE + TILE_SIZE / 2,
+						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
+						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+					}, 3);
+				if(cell.getPath(Cell.WEST))
+					g.fillPolygon(new int[]{
+						x * TILE_SIZE,
+						x * TILE_SIZE + TILE_SIZE / 4,
+						x * TILE_SIZE + TILE_SIZE / 4
+					}, new int[]{
+						y * TILE_SIZE + TILE_SIZE / 2,
+						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6,
+						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6
+					}, 3);
 			}
 		}
+
+		
 
 		g.setColor(Color.WHITE);
 		int cursorThickness = 5;
@@ -122,10 +176,51 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		
 	}
 
+	private Listeners onCellUpdatedListeners = new Listeners();
+
+	public void addOnCellUpdatedListener(Listener listener) {
+		onCellUpdatedListeners.add(listener);
+	}
+
 	@Override
 	public void mousePressed(MouseEvent e) {
 		lastMousePressX = e.getX() + offsetX;
 		lastMousePressY = e.getY() + offsetY;
+
+		int cellX = e.getX() / TILE_SIZE;
+		int cellY = e.getY() / TILE_SIZE;
+
+		int subX = (int) ((e.getX() - cellX * TILE_SIZE) / (TILE_SIZE / 3f));
+		int subY = (int) ((e.getY() - cellY * TILE_SIZE) / (TILE_SIZE / 3f));
+		
+		if(subX == 0 && subY == 0) {
+			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+			board.getCell(cellX, cellY).togglePath(Cell.WEST);
+		} else if(subX == 1 && subY == 0) {
+			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+		} else if(subX == 2 && subY == 0) {
+			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+			board.getCell(cellX, cellY).togglePath(Cell.EAST);
+		} else if(subX == 0 && subY == 1) {
+			board.getCell(cellX, cellY).togglePath(Cell.WEST);
+		} else if(subX == 1 && subY == 1) {
+			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
+			board.getCell(cellX, cellY).togglePath(Cell.EAST);
+			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+			board.getCell(cellX, cellY).togglePath(Cell.WEST);
+		} else if(subX == 2 && subY == 1) {
+			board.getCell(cellX, cellY).togglePath(Cell.EAST);
+		} else if(subX == 0 && subY == 2) {
+			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+			board.getCell(cellX, cellY).togglePath(Cell.WEST);
+		} else if(subX == 1 && subY == 2) {
+			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+		} else if(subX == 2 && subY == 2) {
+			board.getCell(cellX, cellY).togglePath(Cell.EAST);
+			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+		}
+
+		onCellUpdatedListeners.on();
 	}
 
 	@Override
@@ -145,8 +240,8 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		offsetX = lastMousePressX - e.getX();
-		offsetY = lastMousePressY - e.getY();
+		// offsetX = lastMousePressX - e.getX();
+		// offsetY = lastMousePressY - e.getY();
 	}
 
 	@Override

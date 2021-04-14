@@ -117,7 +117,15 @@ public class ClientPanel extends JPanel {
 		}));
 
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
-			add(new BoardPanel(client.getBoard()), BorderLayout.CENTER);
+			BoardPanel boardPanel = new BoardPanel(client.getBoard());
+			add(boardPanel, BorderLayout.CENTER);
+			boardPanel.addOnCellUpdatedListener(() -> {
+				try {
+					client.sendCellUpdates();
+				} catch (IOException e) {
+					// TODO: handle this error
+				}
+			});
 			settingsPanel.setVisible(false);
 			playerSettings.setVisible(false);
 		}));
