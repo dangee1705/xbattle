@@ -193,31 +193,17 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		int subX = (int) ((e.getX() - cellX * TILE_SIZE) / (TILE_SIZE / 3f));
 		int subY = (int) ((e.getY() - cellY * TILE_SIZE) / (TILE_SIZE / 3f));
 		
-		if(subX == 0 && subY == 0) {
+		if(subY == 0 || subX == 1) {
 			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-			board.getCell(cellX, cellY).togglePath(Cell.WEST);
-		} else if(subX == 1 && subY == 0) {
-			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-		} else if(subX == 2 && subY == 0) {
-			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-			board.getCell(cellX, cellY).togglePath(Cell.EAST);
-		} else if(subX == 0 && subY == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.WEST);
-		} else if(subX == 1 && subY == 1) {
-			board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-			board.getCell(cellX, cellY).togglePath(Cell.EAST);
+		}
+		if(subY == 2 || subX == 1) {
 			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
+		}
+		if(subX == 0 || subY == 1) {
 			board.getCell(cellX, cellY).togglePath(Cell.WEST);
-		} else if(subX == 2 && subY == 1) {
+		}
+		if(subX == 2 || subY == 1) {
 			board.getCell(cellX, cellY).togglePath(Cell.EAST);
-		} else if(subX == 0 && subY == 2) {
-			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
-			board.getCell(cellX, cellY).togglePath(Cell.WEST);
-		} else if(subX == 1 && subY == 2) {
-			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
-		} else if(subX == 2 && subY == 2) {
-			board.getCell(cellX, cellY).togglePath(Cell.EAST);
-			board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
 		}
 
 		onCellUpdatedListeners.on();
