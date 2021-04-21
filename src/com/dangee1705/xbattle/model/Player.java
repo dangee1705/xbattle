@@ -34,4 +34,9 @@ public class Player {
 	public void setColorId(int colorId) {
 		this.colorId = colorId;
 	}
+
+	@Override
+	public String toString() {
+		return "Player<" + id + ", " + name + ", " + colorId + ">";
+	}
 }

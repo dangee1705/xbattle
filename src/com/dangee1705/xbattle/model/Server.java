@@ -242,7 +242,6 @@ public class Server implements Runnable {
 					dataOutputStream.writeBoolean(path);
 				dataOutputStream.writeInt(cell.getBase());
 				dataOutputStream.flush();
-				cell.setHasUpdate(false);
 			}
 		}
 
@@ -255,13 +254,9 @@ public class Server implements Runnable {
 		}
 
 		public void sendBoard() throws IOException {
-			sendBoard(false);
-		}
-
-		public void sendBoard(boolean updatesOnly) throws IOException {
 			for(int y = 0; y < board.getHeight(); y++)
 				for(int x = 0; x < board.getWidth(); x++)
-					if(!updatesOnly || board.getCell(x, y).getHasUpdate())
+					if(board.getCell(x, y).getHasUpdate())
 						sendCellUpdate(board.getCell(x, y));
 		}
 	}
@@ -286,12 +281,9 @@ public class Server implements Runnable {
 	}
 
 	public void sendBoard() throws IOException {
-		sendBoard(false);
-	}
-
-	public void sendBoard(boolean updatesOnly) throws IOException {
 		for(ClientHandler clientHandler : clientHandlers)
-			clientHandler.sendBoard(updatesOnly);
+			clientHandler.sendBoard();
+		board.clearHasUpdates();
 	}
 
 	public ArrayList<ClientHandler> getClientHandlers() {
@@ -314,9 +306,6 @@ public class Server implements Runnable {
 
 	@Override
 	public void run() {
-		// generate the board
-		board = new Board(boardWidth, boardHeight, 0.5f, 10);
-
 		clientHandlers = new ArrayList<>();
 		try {
 			serverSocket = new ServerSocket(XBattle.DEFAULT_PORT);
@@ -353,8 +342,10 @@ public class Server implements Runnable {
 			
 		}
 
-		onGameStartListeners.on();
+		// generate the board
+		board = new Board(players, boardWidth, boardHeight, 0.5f, 10);
 
+		onGameStartListeners.on();
 		try {
 			// this will tell each client the game is starting
 			sendGameStart();
@@ -365,7 +356,7 @@ public class Server implements Runnable {
 		while(true) {
 			try {
 				board.update();
-				sendBoard(true);
+				sendBoard();
 				Thread.sleep(1000 / ticksPerSecond);
 			} catch (Exception e) {
 				

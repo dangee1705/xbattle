@@ -107,4 +107,17 @@ public class Cell {
 				count++;
 		return count;
 	}
+
+	public boolean isLand() {
+		return getElevation() >= 0;
+	}
+
+	public boolean isWater() {
+		return getElevation() < 0;
+	}
+
+	@Override
+	public String toString() {
+		return "Cell<" + x + ", " + y + ">";
+	}
 }

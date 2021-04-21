@@ -64,14 +64,26 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 			for(int x = 0; x < board.getWidth(); x++) {
 				Cell cell = board.getCell(x, y);
 				int elevation = cell.getElevation();
+
+				// draw the tile
 				g.setColor(
 					elevation < 0 ?
 					colorLerp(new Color(0, 0, 100), new Color(0, 0, 255), (elevation + 4) / 3f) :
 					colorLerp(new Color(0, 255, 0), new Color(127, 127, 0), elevation / 4f)
 				);
-
 				g.fillRect(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE);
 
+				// draw troops
+				if(cell.getOwner() != null) {
+					g.setColor(XBattle.DEFAULT_NAMED_COLORS[cell.getOwner().getColorId()].getColor());
+					g.fillArc(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE, 0, 360);
+					g.setColor(Color.BLACK);
+					g.drawArc(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE, 0, 360);
+					g.setColor(Color.BLACK);
+					g.drawString(cell.getTroops() + "", TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY + 10);
+				}
+				
+				// draw paths
 				g.setColor(Color.WHITE);
 				if(cell.getPath(Cell.NORTH))
 					g.fillPolygon(new int[]{
@@ -133,6 +145,14 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		int green = clamp((int) (a.getGreen() + (b.getGreen() - a.getGreen()) * t), 0, 255);
 		int blue = clamp((int) (a.getBlue() + (b.getBlue() - a.getBlue()) * t), 0, 255);
 		return new Color(red, green, blue);
+	}
+
+	private int scale(int value, int originalLow, int originalHigh, int newLow, int newHigh) {
+		return clamp(
+			(int) (((double) value - originalLow) / (originalHigh - originalLow)) * (newHigh - newLow) + newLow,
+			newLow,
+			newHigh
+		);
 	}
 
 	@Override

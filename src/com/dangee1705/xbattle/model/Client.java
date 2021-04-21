@@ -138,7 +138,7 @@ public class Client implements Runnable {
 					case 3: {
 						int boardWidth = dataInputStream.readInt();
 						int boardHeight = dataInputStream.readInt();
-						board = new Board(boardWidth, boardHeight);
+						board = new Board(players, boardWidth, boardHeight);
 						onGameStartListeners.on();
 						break;
 					}
@@ -160,6 +160,8 @@ public class Client implements Runnable {
 						for(int i = 0; i < 4; i++)
 							cell.setPath(i, paths[i]);
 						cell.setBase(base);
+						// set the cell to no updates so we dont send it back to the server unnecessarily
+						cell.setHasUpdate(false);
 						break;
 					}
 					case 5: {
