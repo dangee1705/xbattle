@@ -4,25 +4,30 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.BasicStroke;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.JPanel;
 
 import com.dangee1705.xbattle.model.Board;
 import com.dangee1705.xbattle.model.Cell;
+import com.dangee1705.xbattle.model.Client;
 import com.dangee1705.xbattle.model.Listener;
 import com.dangee1705.xbattle.model.Listeners;
+import com.dangee1705.xbattle.model.ai.BaseAI;
 
-public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener {
+public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = -8094612097000197130L;
 
 	private static final int TILE_SIZE = 50;
 
-	private Board board;
+	private Client client;
 
 	private int lastMousePressX = 0;
 	private int lastMousePressY = 0;
@@ -31,12 +36,17 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	private int mouseX = 0;
 	private int mouseY = 0;
 
-	public BoardPanel(Board board) {
-		this.board = board;
+	// change to client
+	public BoardPanel(Client client) {
+		this.client = client;
+		new BaseAI(client);
 
 		addMouseWheelListener(this);
 		addMouseListener(this);
 		addMouseMotionListener(this);
+
+		setFocusable(true);
+		addKeyListener(this);
 
 		Thread thread = new Thread(this, "Board-Panel-Thread");
 		thread.start();
@@ -60,6 +70,9 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setColor(Color.BLACK);
 		g.fillRect(0, 0, getWidth(), getHeight());
+
+		Board board = client.getBoard();
+
 		for(int y = 0; y < board.getHeight(); y++) {
 			for(int x = 0; x < board.getWidth(); x++) {
 				Cell cell = board.getCell(x, y);
@@ -69,19 +82,23 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 				g.setColor(
 					elevation < 0 ?
 					colorLerp(new Color(0, 0, 100), new Color(0, 0, 255), (elevation + 4) / 3f) :
-					colorLerp(new Color(0, 255, 0), new Color(127, 127, 0), elevation / 4f)
+					colorLerp(new Color(0, 255, 0), new Color(255, 127, 0), elevation / 4f)
 				);
 				g.fillRect(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE);
 
 				// draw troops
 				if(cell.getOwner() != null) {
 					g.setColor(XBattle.DEFAULT_NAMED_COLORS[cell.getOwner().getColorId()].getColor());
-					g.fillArc(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE, 0, 360);
-					g.setColor(Color.BLACK);
-					g.drawArc(TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY, TILE_SIZE, TILE_SIZE, 0, 360);
+					int diameter = scale(cell.getTroops(), 0, 100, 10, TILE_SIZE);
+					g.fillArc(TILE_SIZE * x - offsetX + (TILE_SIZE - diameter) / 2, TILE_SIZE * y - offsetY + (TILE_SIZE - diameter) / 2, diameter, diameter, 0, 360);
 					g.setColor(Color.BLACK);
 					g.drawString(cell.getTroops() + "", TILE_SIZE * x - offsetX, TILE_SIZE * y - offsetY + 10);
 				}
+
+				// draw base
+				g.setColor(Color.BLACK);
+				g.setStroke(new BasicStroke(5));
+				g.drawArc(TILE_SIZE * x - offsetX + 2, TILE_SIZE * y - offsetY + 2, TILE_SIZE - 5, TILE_SIZE - 5, 0, (int) (cell.getBase() / 8f * 360));
 				
 				// draw paths
 				g.setColor(Color.WHITE);
@@ -149,7 +166,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 
 	private int scale(int value, int originalLow, int originalHigh, int newLow, int newHigh) {
 		return clamp(
-			(int) (((double) value - originalLow) / (originalHigh - originalLow)) * (newHigh - newLow) + newLow,
+			(int) ((((double) value - originalLow) / (originalHigh - originalLow)) * (newHigh - newLow) + newLow),
 			newLow,
 			newHigh
 		);
@@ -193,26 +210,33 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		int cellX = mouseX / TILE_SIZE;
 		int cellY = mouseY / TILE_SIZE;
 
+		Board board = client.getBoard();
+
 		if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight()) {
+			Cell cell = board.getCell(cellX, cellY);
+
 			int subX = (int) ((mouseX - cellX * TILE_SIZE) / (TILE_SIZE / 3f));
 			int subY = (int) ((mouseY - cellY * TILE_SIZE) / (TILE_SIZE / 3f));
-			
-			if(subY == 0)
-				board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-			if(subY == 2)
-				board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
-			if(subX == 0)
-				board.getCell(cellX, cellY).togglePath(Cell.WEST);
-			if(subX == 2)
-				board.getCell(cellX, cellY).togglePath(Cell.EAST);
-			if(subY == 1 && subX == 1) {
-				board.getCell(cellX, cellY).togglePath(Cell.NORTH);
-				board.getCell(cellX, cellY).togglePath(Cell.EAST);
-				board.getCell(cellX, cellY).togglePath(Cell.SOUTH);
-				board.getCell(cellX, cellY).togglePath(Cell.WEST);
-			}
 
-			onCellUpdatedListeners.on();
+			if(cell.getOwner() == client.getPlayer()) {
+			
+				if(subY == 0)
+					cell.togglePath(Cell.NORTH);
+				if(subY == 2)
+					cell.togglePath(Cell.SOUTH);
+				if(subX == 0)
+					cell.togglePath(Cell.WEST);
+				if(subX == 2)
+					cell.togglePath(Cell.EAST);
+				if(subY == 1 && subX == 1) {
+					cell.togglePath(Cell.NORTH);
+					cell.togglePath(Cell.EAST);
+					cell.togglePath(Cell.SOUTH);
+					cell.togglePath(Cell.WEST);
+				}
+
+				onCellUpdatedListeners.on();
+			}
 		}
 	}
 
@@ -238,5 +262,45 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	public void mouseMoved(MouseEvent e) {
 		mouseX = e.getX() + offsetX;
 		mouseY = e.getY() + offsetY;
+		requestFocusInWindow();
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		int cellX = mouseX / TILE_SIZE;
+		int cellY = mouseY / TILE_SIZE;
+
+		Board board = client.getBoard();
+
+		switch(e.getKeyCode()) {
+			case KeyEvent.VK_Q:
+				if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight())
+					board.getCell(cellX, cellY).increaseElevation();
+				break;
+				
+			case KeyEvent.VK_W:
+				if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight())
+					board.getCell(cellX, cellY).decreaseElevation();
+				break;
+			case KeyEvent.VK_E:
+				if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight()) {
+					Cell cell = board.getCell(cellX, cellY);
+					// if(cell.getOwner() == )
+					cell.increaseBase();
+				}
+				break;
+		}
+
+		onCellUpdatedListeners.on();
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		
 	}
 }

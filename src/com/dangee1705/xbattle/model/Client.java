@@ -25,6 +25,7 @@ public class Client implements Runnable {
 	private Listeners onConnectErrorListeners = new Listeners();
 	private Listeners onPlayerUpdateListeners = new Listeners();
 	private Listeners onGameStartListeners = new Listeners();
+	private Listeners onCellUpdatedListeners = new Listeners();
 
 	public Client() {
 
@@ -75,6 +76,10 @@ public class Client implements Runnable {
 
 	public void addOnGameStartListener(Listener listener) {
 		onGameStartListeners.add(listener);
+	}
+
+	public void addOnCellUpdatedListener(Listener listener) {
+		onCellUpdatedListeners.add(listener);
 	}
 
 	@Override
@@ -132,6 +137,7 @@ public class Client implements Runnable {
 					case 2: {
 						int playerId = dataInputStream.readByte();
 						// TODO: remove player from lobby
+						// onPlayerLeave.on();
 						break;
 					}
 					// game start message
@@ -162,6 +168,7 @@ public class Client implements Runnable {
 						cell.setBase(base);
 						// set the cell to no updates so we dont send it back to the server unnecessarily
 						cell.setHasUpdate(false);
+						onCellUpdatedListeners.on();
 						break;
 					}
 					case 5: {
@@ -169,7 +176,6 @@ public class Client implements Runnable {
 						// TODO: announce winner
 						break;
 					}
-
 					default:
 						// TODO: handle message of wrong type
 						System.out.println("wrong message type" + b);
@@ -199,6 +205,7 @@ public class Client implements Runnable {
 	}
 
 	public void sendCellUpdate(Cell cell) throws IOException {
+		System.out.println("sending " + cell);
 		synchronized(dataOutputStream) {
 			dataOutputStream.writeByte(1);
 			dataOutputStream.writeInt(cell.getX());
@@ -211,12 +218,15 @@ public class Client implements Runnable {
 	}
 
 	public void sendCellUpdates() throws IOException {
-		for(int y = 0; y < board.getHeight(); y++) {
-			for(int x = 0; x < board.getWidth(); x++) {
-				Cell cell = board.getCell(x, y);
-				if(cell.getHasUpdate())
-					sendCellUpdate(cell);
+		synchronized(board) {
+			for(int y = 0; y < board.getHeight(); y++) {
+				for(int x = 0; x < board.getWidth(); x++) {
+					Cell cell = board.getCell(x, y);
+					if(cell.getHasUpdate())
+						sendCellUpdate(cell);
+				}
 			}
+			board.clearHasUpdates();
 		}
 	}
 }

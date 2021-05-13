@@ -8,6 +8,7 @@ public class Board {
 	private int width;
 	private int height;
 	private Cell[][] cells;
+	private Random random = new Random();
 
 	public Board(ArrayList<Player> players, int width, int height) {
 		this.players = players;
@@ -16,16 +17,16 @@ public class Board {
 		this.cells = new Cell[height][width];
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
-				this.cells[y][x] = new Cell(x, y);
+				this.cells[y][x] = new Cell(this, x, y);
 			}
 		}
+		this.clearHasUpdates();
 	}
 
 	public Board(ArrayList<Player> players, int width, int height, float threshold, int steps) {
 		this(players, width, height);
 
 		int landCells;
-		Random random = new Random();
 		do {
 			// create a completely random set of cells
 			boolean[][] automataSourceCells = new boolean[height][width];
@@ -94,7 +95,7 @@ public class Board {
 				for(int x = 0; x < width; x++)
 					if(cells[y][x].isLand())
 						landCells++;
-		} while(landCells < players.size());
+		} while(landCells < players.size() * 10);
 
 		int[] indices = new int[width * height];
 		for(int i = 0; i < width * height; i++)
@@ -131,7 +132,7 @@ public class Board {
 		return cells[y][x];
 	}
 
-	private void clearInvalidPaths() {
+	public void clearInvalidPaths() {
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
 				Cell cell = getCell(x, y);
@@ -147,19 +148,12 @@ public class Board {
 					cell.setPath(Cell.WEST, false);
 
 				// clear paths which are in water or unowned
-				if(cell.isWater() || cell.getOwner() == null) {
+				if(cell.isWater() || cell.getOwner() == null)
 					for(int direction = 0; direction < 4; direction++)
 						cell.setPath(direction, false);
-				// clear paths facing into water
-				} else {
-					if(x > 0 && getCell(x - 1, y).isWater())
-						cell.setPath(Cell.WEST, false);
-					if(x < width - 1 && getCell(x + 1, y).isWater())
-						cell.setPath(Cell.EAST, false);
-					if(y > 0 && getCell(x, y - 1).isWater())
-						cell.setPath(Cell.NORTH, false);
-					if(y < height - 1 && getCell(x, y + 1).isWater())
-						cell.setPath(Cell.SOUTH, false);
+				if(cell.isWater()) {
+					cell.setOwner(null);
+					cell.setTroops(0);
 				}
 			}
 		}
@@ -167,36 +161,78 @@ public class Board {
 
 	private void moveTroops(Cell from, Cell to, int amountToMove) {
 		if(from.getOwner() == to.getOwner()) {
+			while(to.getTroops() + amountToMove > 100)
+				amountToMove--;
 			to.setTroops(to.getTroops() + amountToMove);
+			from.setTroops(from.getTroops() - amountToMove);
 		} else {
 			to.setTroops(to.getTroops() - amountToMove);
+			from.setTroops(from.getTroops() - amountToMove);
+
 			if(to.getTroops() < 0) {
 				to.setTroops(-to.getTroops());
 				to.setOwner(from.getOwner());
+				to.clearPaths();
 			}
 		}
-		from.setTroops(from.getTroops() - amountToMove);
+	}
+
+	private int elevationChange(Cell one, Cell two) {
+		return Math.abs(two.getElevation() - one.getElevation());
+	}
+
+	public Player winner() {
+		Player player = null;
+		for(int y = 0; y < height; y++) {
+			for(int x = 0; x < width; x++) {
+				Cell cell = getCell(x, y);
+				if(player == null && cell.getOwner() != null)
+					player = cell.getOwner();
+				else if(player != null && player != cell.getOwner() && cell.getOwner() != null)
+					return null;
+			}
+		}
+		return player;
 	}
 
 	public void update() {
 		synchronized(this) {
 			clearInvalidPaths();
+
 			for(int y = 0; y < height; y++) {
 				for(int x = 0; x < width; x++) {
+					// get the cell
 					Cell cell = getCell(x, y);
+
+					// add troops to bases
+					if(cell.getBase() == 8 && cell.getTroops() < 100)
+						cell.setTroops(cell.getTroops() + 1);
+				}
+			}
+
+			for(int y = 0; y < height; y++) {
+				for(int x = 0; x < width; x++) {
+					// get the cell
+					Cell cell = getCell(x, y);
+
+					// get neighbours
+					Cell northCell = cell.getNorthNeighbour();
+					Cell eastCell = cell.getEastNeighbour();
+					Cell southCell = cell.getSouthNeighbour();
+					Cell westCell = cell.getWestNeighbour();
+
 					int activePathCount = cell.getActivePathCount();
-					if(activePathCount > 0) {
-						int amountToMove = cell.getTroops() / (activePathCount + 1);
-						if(amountToMove > 0) {
-							if(cell.getPath(Cell.EAST) && x < getWidth() - 1)
-								moveTroops(cell, getCell(x + 1, y), amountToMove);
-							if(cell.getPath(Cell.WEST) && x > 0)
-								moveTroops(cell, getCell(x - 1, y), amountToMove);
-							if(cell.getPath(Cell.NORTH) && y > 0)
-								moveTroops(cell, getCell(x, y - 1), amountToMove);
-							if(cell.getPath(Cell.SOUTH) && y < getHeight() - 1)
-								moveTroops(cell, getCell(x, y + 1), amountToMove);
-						}
+					if(activePathCount > 0 && cell.getTroops() > activePathCount) {
+						int toMove = cell.getTroops() / activePathCount;
+
+						if(northCell != null && northCell.isLand() && cell.getPath(Cell.NORTH))
+							moveTroops(cell, northCell, Math.min(toMove, 5) / (1 + elevationChange(cell, northCell) / 2));
+						if(eastCell != null && eastCell.isLand() && cell.getPath(Cell.EAST))
+							moveTroops(cell, eastCell, Math.min(toMove, 5) / (1 + elevationChange(cell, eastCell) / 2));
+						if(southCell != null && southCell.isLand() && cell.getPath(Cell.SOUTH))
+							moveTroops(cell, southCell, Math.min(toMove, 5) / (1 + elevationChange(cell, southCell) / 2));
+						if(westCell != null && westCell.isLand() && cell.getPath(Cell.WEST))
+							moveTroops(cell, westCell, Math.min(toMove, 5) / (1 + elevationChange(cell, westCell) / 2));
 					}
 				}
 			}

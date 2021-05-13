@@ -19,7 +19,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
 
 import com.dangee1705.xbattle.model.Server;
-import com.dangee1705.xbattle.model.Server.ClientHandler;
+import com.dangee1705.xbattle.model.ClientHandler;
 
 public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandler> {
 
@@ -42,10 +42,10 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		JPanel settingsPanel = new JPanel(new BorderLayout());
 		JPanel settingsGridPanel = new JPanel(new GridLayout(3, 2, 10, 10));
 		settingsGridPanel.add(new JLabel("Board Width"));
-		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
+		JSpinner boardWidthSpinner = new JSpinner(new SpinnerNumberModel(20, 1, 100, 1));
 		settingsGridPanel.add(boardWidthSpinner);
 		settingsGridPanel.add(new JLabel("Board Height"));
-		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 100, 1));
+		JSpinner boardHeightSpinner = new JSpinner(new SpinnerNumberModel(20, 1, 100, 1));
 		settingsGridPanel.add(boardHeightSpinner);
 		settingsGridPanel.add(new JLabel("Ticks Per Second"));
 		JSpinner ticksPerSecondSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 500, 1));
@@ -99,6 +99,7 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 			startServerButton.setText("Start Server");
 			startServerButton.setEnabled(true);
 			lobbyPanel.setVisible(false);
+			JOptionPane.showMessageDialog(this, "Could not start the server. Is it already running?", "Error", JOptionPane.ERROR_MESSAGE);
 		}));
 		server.addOnClientConnectListener(() -> SwingUtilities.invokeLater(() -> updateClientList()));
 		server.addOnClientDisconnectListener(() -> SwingUtilities.invokeLater(() -> updateClientList()));
@@ -115,7 +116,7 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 
 	public void updateClientList() {
 		clientListModel.clear();
-		for(Server.ClientHandler clientHandler : server.getClientHandlers()) {
+		for(ClientHandler clientHandler : server.getClientHandlers()) {
 			if(clientHandler != null) {
 				clientListModel.addElement(clientHandler);
 			}

@@ -75,6 +75,7 @@ public class ClientPanel extends JPanel {
 		playerSettings = new JPanel(new GridLayout(2, 2, 10, 10));
 		playerSettings.add(new JLabel("Name"));
 		JTextField nameTextField = new JTextField();
+
 		nameTextField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
@@ -117,7 +118,7 @@ public class ClientPanel extends JPanel {
 		}));
 
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
-			BoardPanel boardPanel = new BoardPanel(client.getBoard());
+			BoardPanel boardPanel = new BoardPanel(client);
 			add(boardPanel, BorderLayout.CENTER);
 			boardPanel.addOnCellUpdatedListener(() -> {
 				try {
