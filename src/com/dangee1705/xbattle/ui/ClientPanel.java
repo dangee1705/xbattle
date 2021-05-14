@@ -10,6 +10,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -129,6 +130,10 @@ public class ClientPanel extends JPanel {
 			});
 			settingsPanel.setVisible(false);
 			playerSettings.setVisible(false);
+		}));
+
+		client.addOnGameEndListener(() -> SwingUtilities.invokeLater(() -> {
+			JOptionPane.showMessageDialog(this, "Winner is player " + (client.getWinnerId() + 1) + "!", "Game Over!", JOptionPane.INFORMATION_MESSAGE);
 		}));
 	}
 }

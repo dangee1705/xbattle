@@ -213,7 +213,9 @@ public class ClientHandler implements Runnable {
 		try {
 			outputStream.writeByte(5);
 			outputStream.writeInt(winnerId);
+			outputStream.flush();
 		} catch(IOException e) {
+			e.printStackTrace();
 			onErrorListeners.on();
 			shouldBeRunning = false;
 		}

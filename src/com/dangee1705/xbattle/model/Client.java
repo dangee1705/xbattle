@@ -20,12 +20,14 @@ public class Client implements Runnable {
 	private Player player = new Player(-1, "Player", -1);
 	private ArrayList<Player> players = new ArrayList<>();
 	private Board board;
+	private int winnerId = -1;
 
 	private Listeners onConnectListeners = new Listeners();
 	private Listeners onConnectErrorListeners = new Listeners();
 	private Listeners onPlayerUpdateListeners = new Listeners();
 	private Listeners onGameStartListeners = new Listeners();
 	private Listeners onCellUpdatedListeners = new Listeners();
+	private Listeners onGameEndListeners = new Listeners();
 
 	public Client() {
 
@@ -80,6 +82,10 @@ public class Client implements Runnable {
 
 	public void addOnCellUpdatedListener(Listener listener) {
 		onCellUpdatedListeners.add(listener);
+	}
+
+	public void addOnGameEndListener(Listener listener) {
+		onGameEndListeners.add(listener);
 	}
 
 	@Override
@@ -172,8 +178,9 @@ public class Client implements Runnable {
 						break;
 					}
 					case 5: {
-						int winnerId = dataInputStream.readInt();
-						// TODO: announce winner
+						winnerId = dataInputStream.readInt();
+						onGameEndListeners.on();
+						running = false;
 						break;
 					}
 					default:
@@ -205,7 +212,6 @@ public class Client implements Runnable {
 	}
 
 	public void sendCellUpdate(Cell cell) throws IOException {
-		System.out.println("sending " + cell);
 		synchronized(dataOutputStream) {
 			dataOutputStream.writeByte(1);
 			dataOutputStream.writeInt(cell.getX());
@@ -228,5 +234,9 @@ public class Client implements Runnable {
 			}
 			board.clearHasUpdates();
 		}
+	}
+
+	public int getWinnerId() {
+		return winnerId;
 	}
 }

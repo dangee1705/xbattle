@@ -25,7 +25,7 @@ public class Server implements Runnable {
 	private Listeners onClientDisconnectListeners = new Listeners();
 	private Listeners onStopListeners = new Listeners();
 	private Listeners onGameStartListeners = new Listeners();
-	private Listeners onWinConditionReachedListeners = new Listeners();
+	private Listeners onEndOfGameListeners = new Listeners();
 
 	public Board getBoard() {
 		return board;
@@ -188,8 +188,8 @@ public class Server implements Runnable {
 
 				Player winner = board.winner();
 				if(winner != null) {
-					System.out.println(winner + " won");
-					onWinConditionReachedListeners.on();
+					sendEndOfGame(winner.getId());
+					onEndOfGameListeners.on();
 					break;
 				}
 
@@ -206,11 +206,16 @@ public class Server implements Runnable {
 		inLobbyPhase = false;
 	}
 
-	public void addOnWinConditionReachedListener(Listener listener) {
-		onWinConditionReachedListeners.add(listener);
+	public void addOnEndOfGameListener(Listener listener) {
+		onEndOfGameListeners.add(listener);
 	}
 
-	public void removeOnWinConditionReachedListener(Listener listener) {
-		onWinConditionReachedListeners.remove(listener);
+	public void removeOnEndOfGameListener(Listener listener) {
+		onEndOfGameListeners.remove(listener);
+	}
+
+	public void sendEndOfGame(int winnerId) {
+		for(ClientHandler clientHandler : clientHandlers)
+			clientHandler.sendEndOfGame(winnerId);
 	}
 }
