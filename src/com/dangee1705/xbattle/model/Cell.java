@@ -188,4 +188,9 @@ public class Cell {
 	public String toString() {
 		return "Cell<" + x + ", " + y + ">";
 	}
+
+	@Override
+	public int hashCode() {
+		return y * board.getWidth() + x;
+	}
 }

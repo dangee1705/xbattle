@@ -31,9 +31,7 @@ public class XBattle {
 		JFrame jFrame = new JFrame("XBattle by Daniel Gee");
 
 		JTabbedPane jTabbedPane = new JTabbedPane();
-		jTabbedPane.addTab("Server", new ServerPanel());
-		jTabbedPane.addTab("Client", new ClientPanel());
-		jTabbedPane.addTab("Client", new ClientPanel());
+		jTabbedPane.addTab("Intro", new IntroPanel());
 		jFrame.setContentPane(jTabbedPane);
 
 		jFrame.setSize(600, 800);

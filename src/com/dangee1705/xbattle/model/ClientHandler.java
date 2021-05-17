@@ -3,6 +3,7 @@ package com.dangee1705.xbattle.model;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.HashSet;
 
 import com.dangee1705.xbattle.ui.XBattle;
 
@@ -14,6 +15,7 @@ public class ClientHandler implements Runnable {
 	private BetterOutputStream outputStream;
 	private BetterInputStream inputStream;
 	private Listeners onErrorListeners = new Listeners();
+	private CellQueueRunnable cellQueueRunnable;
 
 	public void addOnErrorListener(Listener listener) {
 		onErrorListeners.add(listener);
@@ -21,6 +23,53 @@ public class ClientHandler implements Runnable {
 
 	public void removeOnErrorListener(Listener listener) {
 		onErrorListeners.remove(listener);
+	}
+
+	// TODO: make just iterate the board instead its probably faster
+	private class CellQueueRunnable implements Runnable {
+		private HashSet<Cell> cells = new HashSet<>();
+
+		public void addCell(Cell cell) {
+			synchronized(cells) {
+				cells.add(cell);
+			}
+		}
+
+		@Override
+		public void run() {
+			while(shouldBeRunning) {
+				Object[] cellsToSend = {};
+				synchronized(cells) {
+					if(cells.size() > 0) {
+						cellsToSend = cells.toArray();
+						cells = new HashSet<>();
+					}
+				}
+
+				for(Object cell : cellsToSend)
+					sendCellUpdate((Cell) cell);
+			}
+		}
+
+		private void sendCellUpdate(Cell cell) {
+			synchronized(outputStream) {
+				try {
+					outputStream.writeByte(4);
+					outputStream.writeInt(cell.getX());
+					outputStream.writeInt(cell.getY());
+					outputStream.writeInt(cell.getTroops());
+					outputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
+					outputStream.writeInt(cell.getElevation());
+					for(boolean path : cell.getPaths())
+						outputStream.writeBoolean(path);
+					outputStream.writeInt(cell.getBase());
+					outputStream.flush();
+				} catch (IOException e) {
+					onErrorListeners.on();
+					shouldBeRunning = false;
+				}
+			}
+		}
 	}
 
 	public ClientHandler(Server server, Socket socket, Player player) {
@@ -36,10 +85,15 @@ public class ClientHandler implements Runnable {
 
 		sendHello(player.getId());
 		sendPlayerUpdate(player);
+		server.sendAllPlayers();
 
 		shouldBeRunning = true;
-		Thread thread = new Thread(this);
+		Thread thread = new Thread(this, "Client-Handler-Thread");
 		thread.start();
+
+		cellQueueRunnable = new CellQueueRunnable();
+		Thread cellQueueThread = new Thread(cellQueueRunnable, "Client-Handler-Cell-Queue-Thread");
+		cellQueueThread.start();
 	}
 
 	public Socket getSocket() {
@@ -90,14 +144,14 @@ public class ClientHandler implements Runnable {
 						cell.setPath(Cell.SOUTH, south);
 						cell.setPath(Cell.WEST, west);
 
-						// TODO: validate base logic
+						// TODO: elevation change checks
 
-						if(cell.getBase() != base && cell.getTroops() == 100) {
+						if(cell.getBase() != base && Math.abs(cell.getBase() - base) == 1 && cell.getTroops() == 100) {
 							cell.setBase(base);
 							cell.setTroops(0);
 						}
 
-						board.clearInvalidPaths(); // TODO: fix properly
+						board.clearInvalidPaths();
 					} else {
 						if(y > 0 && board.getCell(x, y - 1).getOwner() == player && board.getCell(x, y - 1).getTroops() == 100) {
 							cell.setElevation(elevation);
@@ -128,96 +182,87 @@ public class ClientHandler implements Runnable {
 	}
 
 	public void sendHello(int playerId) {
-		try {
-			outputStream.writeByte(0);
-			outputStream.writeInt(playerId);
-			outputStream.flush();
-		} catch (IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(0);
+				outputStream.writeInt(playerId);
+				outputStream.flush();
+			} catch (IOException e) {
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
 		}
 	}
 
 	public void sendPlayerUpdate(Player player) {
-		try {
-			outputStream.writeByte(1);
-			outputStream.writeInt(player.getId());
-			outputStream.writeString(player.getName());
-			outputStream.writeInt(player.getColorId());
-			outputStream.flush();
-		} catch (IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(1);
+				outputStream.writeInt(player.getId());
+				outputStream.writeString(player.getName());
+				outputStream.writeInt(player.getColorId());
+				outputStream.flush();
+			} catch (IOException e) {
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
 		}
 	}
 
 	public void sendPlayerLeft(int playerId) {
-		try {
-			outputStream.writeByte(2);
-			outputStream.writeInt(playerId);
-			outputStream.flush();
-		} catch (IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(2);
+				outputStream.writeInt(playerId);
+				outputStream.flush();
+			} catch (IOException e) {
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
 		}
 	}
 
 	public void sendGameStarting(Board board) {
-		try {
-			outputStream.writeByte(3);
-			outputStream.writeInt(board.getWidth());
-			outputStream.writeInt(board.getHeight());
-			outputStream.flush();
-			sendBoard(board);
-		} catch (IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(3);
+				outputStream.writeInt(board.getWidth());
+				outputStream.writeInt(board.getHeight());
+				outputStream.flush();
+			} catch (IOException e) {
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
 		}
+		sendBoard(board);
 	}
 
 	public void sendCellUpdate(Cell cell) {
-		try {
-			outputStream.writeByte(4);
-			outputStream.writeInt(cell.getX());
-			outputStream.writeInt(cell.getY());
-			outputStream.writeInt(cell.getTroops());
-			outputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
-			outputStream.writeInt(cell.getElevation());
-			for(boolean path : cell.getPaths())
-				outputStream.writeBoolean(path);
-			outputStream.writeInt(cell.getBase());
-		} catch (IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
-		}
+		cellQueueRunnable.addCell(cell);
 	}
 
 	// convinience method to do multiple cell updates
 	public void sendBoard(Board board) {
-		try {
-			for(int y = 0; y < board.getHeight(); y++) {
-				for(int x = 0; x < board.getWidth(); x++) {
-					Cell cell = board.getCell(x, y);
-					if(cell.getHasUpdate())
-						sendCellUpdate(cell);
-				}
+		for(int y = 0; y < board.getHeight(); y++) {
+			for(int x = 0; x < board.getWidth(); x++) {
+				Cell cell = board.getCell(x, y);
+				if(cell.getHasUpdate())
+					sendCellUpdate(cell);
 			}
-			outputStream.flush();
-		} catch(IOException e) {
-			onErrorListeners.on();
-			shouldBeRunning = false;
 		}
 	}
 
 	public void sendEndOfGame(int winnerId) {
-		try {
-			outputStream.writeByte(5);
-			outputStream.writeInt(winnerId);
-			outputStream.flush();
-		} catch(IOException e) {
-			e.printStackTrace();
-			onErrorListeners.on();
-			shouldBeRunning = false;
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(5);
+				outputStream.writeInt(winnerId);
+				outputStream.flush();
+			} catch(IOException e) {
+				e.printStackTrace();
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
 		}
 	}
 }

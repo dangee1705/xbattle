@@ -1,17 +1,17 @@
 package com.dangee1705.xbattle.ui;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
-import java.awt.BasicStroke;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.JPanel;
 
@@ -21,6 +21,8 @@ import com.dangee1705.xbattle.model.Client;
 import com.dangee1705.xbattle.model.Listener;
 import com.dangee1705.xbattle.model.Listeners;
 import com.dangee1705.xbattle.model.ai.BaseAI;
+import com.dangee1705.xbattle.model.ai.SpreadAI;
+import com.dangee1705.xbattle.model.ai.TowardsEnemyAI;
 
 public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = -8094612097000197130L;
@@ -39,7 +41,9 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	// change to client
 	public BoardPanel(Client client) {
 		this.client = client;
-		new BaseAI(client);
+		// new SpreadAI(client);
+		// new BaseAI(client);
+		new TowardsEnemyAI(client);
 
 		addMouseWheelListener(this);
 		addMouseListener(this);
@@ -290,8 +294,8 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 			case KeyEvent.VK_E:
 				if(cellX >= 0 && cellX < board.getWidth() && cellY >= 0 && cellY < board.getHeight()) {
 					Cell cell = board.getCell(cellX, cellY);
-					// if(cell.getOwner() == )
-					cell.increaseBase();
+					if(cell.getOwner() == client.getPlayer())
+						cell.increaseBase();
 				}
 				break;
 		}

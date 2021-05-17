@@ -1,9 +1,11 @@
 package com.dangee1705.xbattle.model;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
-public class Board {
+public class Board implements Iterable<Cell> {
 	private ArrayList<Player> players;
 	private int width;
 	private int height;
@@ -154,6 +156,7 @@ public class Board {
 				if(cell.isWater()) {
 					cell.setOwner(null);
 					cell.setTroops(0);
+					cell.setBase(0);
 				}
 			}
 		}
@@ -243,5 +246,32 @@ public class Board {
 		for(int y = 0; y < height; y++)
 			for(int x = 0; x < width; x++)
 				getCell(x, y).setHasUpdate(false);
+	}
+
+	@Override
+	public Iterator<Cell> iterator() {
+		return new Iterator<Cell>(){
+			private int x = 0;
+			private int y = 0;
+
+			@Override
+			public boolean hasNext() {
+				return y < getHeight();
+			}
+
+			@Override
+			public Cell next() {
+				if(!hasNext())
+					throw new NoSuchElementException("No more cells!");
+
+				Cell cell = getCell(x, y);
+				x++;
+				if(x == getWidth()) {
+					x = 0;
+					y++;
+				}
+				return cell;
+			}
+		};
 	}
 }

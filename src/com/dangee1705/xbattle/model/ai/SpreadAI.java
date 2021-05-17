@@ -1,7 +1,5 @@
 package com.dangee1705.xbattle.model.ai;
 
-import java.io.IOException;
-
 import com.dangee1705.xbattle.model.Board;
 import com.dangee1705.xbattle.model.Cell;
 import com.dangee1705.xbattle.model.Client;
@@ -26,11 +24,6 @@ public class SpreadAI extends AI {
 			}
 		}
 
-		try {
-			client.sendCellUpdates();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		client.sendCellUpdates();
 	}
 }

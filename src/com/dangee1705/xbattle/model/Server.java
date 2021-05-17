@@ -102,13 +102,13 @@ public class Server implements Runnable {
 			clientHandler.sendGameStarting(board);
 	}
 
-	public void sendAllPlayers() throws IOException {
+	public void sendAllPlayers() {
 		for(ClientHandler clientHandler : clientHandlers)
 			for(Player player : players)
 				clientHandler.sendPlayerUpdate(player);
 	}
 
-	public void sendBoard() throws IOException {
+	public void sendBoard() {
 		for(ClientHandler clientHandler : clientHandlers)
 			clientHandler.sendBoard(board);
 		board.clearHasUpdates();
@@ -151,7 +151,23 @@ public class Server implements Runnable {
 		while(inLobbyPhase) {
 			try {
 				Socket socket = serverSocket.accept();
-				Player player = new Player(nextPlayerId++, "Player " + nextPlayerId, -1);
+
+				int colourId = -1;
+				for(int i = 0; i < XBattle.DEFAULT_NAMED_COLORS.length; i++) {
+					boolean found = false;
+					for(int j = 0; j < players.size(); j++) {
+						if(players.get(j).getColorId() == i) {
+							found = true;
+							break;
+						}
+					}
+					if(!found) {
+						colourId = i;
+						break;
+					}
+				}
+
+				Player player = new Player(nextPlayerId++, "Player " + nextPlayerId, colourId);
 				ClientHandler clientHandler = new ClientHandler(this, socket, player);
 				// TODO: register error handlers and unregister at end
 				clientHandlers.add(clientHandler);
@@ -162,12 +178,6 @@ public class Server implements Runnable {
 			} catch(IOException e) {
 				continue;
 			}
-		}
-
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			
 		}
 
 		// generate the board
@@ -197,6 +207,12 @@ public class Server implements Runnable {
 			} catch (Exception e) {
 				
 			}
+		}
+
+		try {
+			serverSocket.close();
+		} catch(Exception e) {
+		
 		}
 
 		onStopListeners.on();

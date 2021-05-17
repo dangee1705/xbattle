@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -12,6 +11,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
@@ -80,13 +80,8 @@ public class ClientPanel extends JPanel {
 		nameTextField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
-				// TODO: dont send after every keypress only on certain ones
-				try {
-					client.getPlayer().setName(nameTextField.getText());
-					client.sendPlayerUpdate();
-				} catch (IOException e1) {
-					
-				}
+				client.getPlayer().setName(nameTextField.getText());
+				client.sendPlayerUpdate();
 			}
 		});
 		playerSettings.add(nameTextField);
@@ -102,11 +97,7 @@ public class ClientPanel extends JPanel {
 			// make sure there was actually a change
 			if(selected != client.getPlayer().getColorId()) {
 				client.getPlayer().setColorId(selected);
-				try {
-					client.sendPlayerUpdate();
-				} catch (IOException e) {
-					
-				}
+				client.sendPlayerUpdate();
 			}
 		});
 		playerSettings.add(colorComboBox);
@@ -121,19 +112,15 @@ public class ClientPanel extends JPanel {
 		client.addOnGameStartListener(() -> SwingUtilities.invokeLater(() -> {
 			BoardPanel boardPanel = new BoardPanel(client);
 			add(boardPanel, BorderLayout.CENTER);
-			boardPanel.addOnCellUpdatedListener(() -> {
-				try {
-					client.sendCellUpdates();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			});
+			boardPanel.addOnCellUpdatedListener(() -> client.sendCellUpdates());
 			settingsPanel.setVisible(false);
 			playerSettings.setVisible(false);
 		}));
 
 		client.addOnGameEndListener(() -> SwingUtilities.invokeLater(() -> {
 			JOptionPane.showMessageDialog(this, "Winner is player " + (client.getWinnerId() + 1) + "!", "Game Over!", JOptionPane.INFORMATION_MESSAGE);
+			JTabbedPane parent = (JTabbedPane) getParent();
+			parent.remove(this);
 		}));
 	}
 }

@@ -1,8 +1,6 @@
 package com.dangee1705.xbattle.model;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,8 +12,8 @@ public class Client implements Runnable {
 	private Socket socket;
 	private boolean running = false;
 	private Thread thread;
-	private DataInputStream dataInputStream;
-	private DataOutputStream dataOutputStream;
+	private BetterInputStream inputStream;
+	private BetterOutputStream outputStream;
 
 	private Player player = new Player(-1, "Player", -1);
 	private ArrayList<Player> players = new ArrayList<>();
@@ -25,9 +23,11 @@ public class Client implements Runnable {
 	private Listeners onConnectListeners = new Listeners();
 	private Listeners onConnectErrorListeners = new Listeners();
 	private Listeners onPlayerUpdateListeners = new Listeners();
+	private Listeners onPlayerLeaveListeners = new Listeners();
 	private Listeners onGameStartListeners = new Listeners();
 	private Listeners onCellUpdatedListeners = new Listeners();
 	private Listeners onGameEndListeners = new Listeners();
+	private Listeners onErrorListeners = new Listeners();
 
 	public Client() {
 
@@ -76,6 +76,10 @@ public class Client implements Runnable {
 		onPlayerUpdateListeners.add(listener);
 	}
 
+	public void addOnPlayerLeaveListener(Listener listener) {
+		onPlayerLeaveListeners.add(listener);
+	}
+
 	public void addOnGameStartListener(Listener listener) {
 		onGameStartListeners.add(listener);
 	}
@@ -88,12 +92,16 @@ public class Client implements Runnable {
 		onGameEndListeners.add(listener);
 	}
 
+	public void addOnErrorListener(Listener listener) {
+		onErrorListeners.add(listener);
+	}
+
 	@Override
 	public void run() {
 		try {
 			socket = new Socket(serverAddress, serverPort);
-			dataInputStream = new DataInputStream(new BufferedInputStream(socket.getInputStream()));
-			dataOutputStream = new DataOutputStream(socket.getOutputStream());
+			inputStream = new BetterInputStream(new BufferedInputStream(socket.getInputStream()));
+			outputStream = new BetterOutputStream(socket.getOutputStream());
 		} catch(IOException e) {
 			running = false;
 			onConnectErrorListeners.on();
@@ -105,10 +113,10 @@ public class Client implements Runnable {
 		while(running){
 			// TODO: make sure lobby commands cannot be run during game phase
 			try {
-				byte b = dataInputStream.readByte();
+				byte b = inputStream.readByte();
 				switch(b) {
 					case 0: {
-						int playerId = dataInputStream.readInt();
+						int playerId = inputStream.readInt();
 						player.setId(playerId);
 						if(!players.contains(player))
 							players.add(player);
@@ -116,11 +124,9 @@ public class Client implements Runnable {
 					}
 					// player update message
 					case 1: {
-						int playerId = dataInputStream.readInt();
-						int playerNameLength = dataInputStream.readInt();
-						byte[] playerNameBytes = dataInputStream.readNBytes(playerNameLength);
-						String playerName = new String(playerNameBytes);
-						int playerColorId = dataInputStream.readInt();
+						int playerId = inputStream.readInt();
+						String playerName = inputStream.readString();
+						int playerColorId = inputStream.readInt();
 						
 						Player playerToUpdate = null;
 						for(Player player : players) {
@@ -141,29 +147,29 @@ public class Client implements Runnable {
 						break;
 					}
 					case 2: {
-						int playerId = dataInputStream.readByte();
-						// TODO: remove player from lobby
-						// onPlayerLeave.on();
+						int playerId = inputStream.readByte();
+						players.remove(getPlayerById(playerId));
+						onPlayerLeaveListeners.on();
 						break;
 					}
 					// game start message
 					case 3: {
-						int boardWidth = dataInputStream.readInt();
-						int boardHeight = dataInputStream.readInt();
+						int boardWidth = inputStream.readInt();
+						int boardHeight = inputStream.readInt();
 						board = new Board(players, boardWidth, boardHeight);
 						onGameStartListeners.on();
 						break;
 					}
 					case 4: {
-						int x = dataInputStream.readInt();
-						int y = dataInputStream.readInt();
-						int troops = dataInputStream.readInt();
-						int ownerId = dataInputStream.readInt();
-						int elevation = dataInputStream.readInt();
+						int x = inputStream.readInt();
+						int y = inputStream.readInt();
+						int troops = inputStream.readInt();
+						int ownerId = inputStream.readInt();
+						int elevation = inputStream.readInt();
 						boolean[] paths = new boolean[4];
 						for(int i = 0; i < 4; i++)
-							paths[i] = dataInputStream.readBoolean();
-						int base = dataInputStream.readInt();
+							paths[i] = inputStream.readBoolean();
+						int base = inputStream.readInt();
 
 						Cell cell = board.getCell(x, y);
 						cell.setTroops(troops);
@@ -178,19 +184,18 @@ public class Client implements Runnable {
 						break;
 					}
 					case 5: {
-						winnerId = dataInputStream.readInt();
+						winnerId = inputStream.readInt();
 						onGameEndListeners.on();
 						running = false;
 						break;
 					}
 					default:
-						// TODO: handle message of wrong type
-						System.out.println("wrong message type" + b);
+						onErrorListeners.on();
+						running = false;
 						break;
 				}
 			} catch(IOException e) {
-				e.printStackTrace();
-				return;
+				running = false;
 			}
 		}
 
@@ -201,29 +206,37 @@ public class Client implements Runnable {
 		}
 	}
 
-	public void sendPlayerUpdate() throws IOException {
-		synchronized(dataOutputStream) {
-			dataOutputStream.writeByte(0);
-			byte[] nameBytes = player.getName().getBytes();
-			dataOutputStream.writeInt(nameBytes.length);
-			dataOutputStream.write(nameBytes);
-			dataOutputStream.writeInt(player.getColorId());
+	public void sendPlayerUpdate() {
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(0);
+				outputStream.writeString(player.getName());
+				outputStream.writeInt(player.getColorId());
+			} catch (IOException e) {
+				onErrorListeners.on();
+				running = false;
+			}
 		}
 	}
 
-	public void sendCellUpdate(Cell cell) throws IOException {
-		synchronized(dataOutputStream) {
-			dataOutputStream.writeByte(1);
-			dataOutputStream.writeInt(cell.getX());
-			dataOutputStream.writeInt(cell.getY());
-			dataOutputStream.writeInt(cell.getElevation());
-			for(boolean path : cell.getPaths())
-				dataOutputStream.writeBoolean(path);
-			dataOutputStream.writeInt(cell.getBase());
+	public void sendCellUpdate(Cell cell) {
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(1);
+				outputStream.writeInt(cell.getX());
+				outputStream.writeInt(cell.getY());
+				outputStream.writeInt(cell.getElevation());
+				for(boolean path : cell.getPaths())
+					outputStream.writeBoolean(path);
+				outputStream.writeInt(cell.getBase());
+			} catch(IOException e) {
+				onErrorListeners.on();
+				running = false;
+			}
 		}
 	}
 
-	public void sendCellUpdates() throws IOException {
+	public void sendCellUpdates() {
 		synchronized(board) {
 			for(int y = 0; y < board.getHeight(); y++) {
 				for(int x = 0; x < board.getWidth(); x++) {
