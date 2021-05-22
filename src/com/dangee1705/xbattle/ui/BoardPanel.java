@@ -20,9 +20,6 @@ import com.dangee1705.xbattle.model.Cell;
 import com.dangee1705.xbattle.model.Client;
 import com.dangee1705.xbattle.model.Listener;
 import com.dangee1705.xbattle.model.Listeners;
-import com.dangee1705.xbattle.model.ai.BaseAI;
-import com.dangee1705.xbattle.model.ai.SpreadAI;
-import com.dangee1705.xbattle.model.ai.TowardsEnemyAI;
 
 public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = -8094612097000197130L;
@@ -41,10 +38,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 	// change to client
 	public BoardPanel(Client client) {
 		this.client = client;
-		// new SpreadAI(client);
-		// new BaseAI(client);
-		// new TowardsEnemyAI(client);
-
+		
 		addMouseWheelListener(this);
 		addMouseListener(this);
 		addMouseMotionListener(this);

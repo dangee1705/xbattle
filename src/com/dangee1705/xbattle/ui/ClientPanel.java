@@ -17,7 +17,6 @@ import javax.swing.SwingUtilities;
 
 import com.dangee1705.xbattle.model.Client;
 import com.dangee1705.xbattle.model.NamedColor;
-import com.dangee1705.xbattle.model.ai.AI;
 import com.dangee1705.xbattle.model.ai.BaseAI;
 import com.dangee1705.xbattle.model.ai.SpreadAI;
 import com.dangee1705.xbattle.model.ai.TowardsEnemyAI;

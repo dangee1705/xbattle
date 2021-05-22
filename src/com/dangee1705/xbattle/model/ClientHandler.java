@@ -3,7 +3,6 @@ package com.dangee1705.xbattle.model;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.HashSet;
 
 import com.dangee1705.xbattle.ui.XBattle;
 
@@ -15,7 +14,6 @@ public class ClientHandler implements Runnable {
 	private BetterOutputStream outputStream;
 	private BetterInputStream inputStream;
 	private Listeners onErrorListeners = new Listeners();
-	private CellQueueRunnable cellQueueRunnable;
 
 	public void addOnErrorListener(Listener listener) {
 		onErrorListeners.add(listener);
@@ -23,53 +21,6 @@ public class ClientHandler implements Runnable {
 
 	public void removeOnErrorListener(Listener listener) {
 		onErrorListeners.remove(listener);
-	}
-
-	// TODO: make just iterate the board instead its probably faster
-	private class CellQueueRunnable implements Runnable {
-		private HashSet<Cell> cells = new HashSet<>();
-
-		public void addCell(Cell cell) {
-			synchronized(cells) {
-				cells.add(cell);
-			}
-		}
-
-		@Override
-		public void run() {
-			while(shouldBeRunning) {
-				Object[] cellsToSend = {};
-				synchronized(cells) {
-					if(cells.size() > 0) {
-						cellsToSend = cells.toArray();
-						cells = new HashSet<>();
-					}
-				}
-
-				for(Object cell : cellsToSend)
-					sendCellUpdate((Cell) cell);
-			}
-		}
-
-		private void sendCellUpdate(Cell cell) {
-			synchronized(outputStream) {
-				try {
-					outputStream.writeByte(4);
-					outputStream.writeInt(cell.getX());
-					outputStream.writeInt(cell.getY());
-					outputStream.writeInt(cell.getTroops());
-					outputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
-					outputStream.writeInt(cell.getElevation());
-					for(boolean pipe : cell.getPipes())
-						outputStream.writeBoolean(pipe);
-					outputStream.writeInt(cell.getBase());
-					outputStream.flush();
-				} catch (IOException e) {
-					onErrorListeners.on();
-					shouldBeRunning = false;
-				}
-			}
-		}
 	}
 
 	public ClientHandler(Server server, Socket socket, Player player) {
@@ -90,10 +41,6 @@ public class ClientHandler implements Runnable {
 		shouldBeRunning = true;
 		Thread thread = new Thread(this, "Client-Handler-Thread");
 		thread.start();
-
-		cellQueueRunnable = new CellQueueRunnable();
-		Thread cellQueueThread = new Thread(cellQueueRunnable, "Client-Handler-Cell-Queue-Thread");
-		cellQueueThread.start();
 	}
 
 	public Socket getSocket() {
@@ -238,7 +185,23 @@ public class ClientHandler implements Runnable {
 	}
 
 	public void sendCellUpdate(Cell cell) {
-		cellQueueRunnable.addCell(cell);
+		synchronized(outputStream) {
+			try {
+				outputStream.writeByte(4);
+				outputStream.writeInt(cell.getX());
+				outputStream.writeInt(cell.getY());
+				outputStream.writeInt(cell.getTroops());
+				outputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
+				outputStream.writeInt(cell.getElevation());
+				for(boolean pipe : cell.getPipes())
+					outputStream.writeBoolean(pipe);
+				outputStream.writeInt(cell.getBase());
+				outputStream.flush();
+			} catch (IOException e) {
+				onErrorListeners.on();
+				shouldBeRunning = false;
+			}
+		}
 	}
 
 	// convinience method to do multiple cell updates
