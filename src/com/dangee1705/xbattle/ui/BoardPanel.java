@@ -43,7 +43,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 		this.client = client;
 		// new SpreadAI(client);
 		// new BaseAI(client);
-		new TowardsEnemyAI(client);
+		// new TowardsEnemyAI(client);
 
 		addMouseWheelListener(this);
 		addMouseListener(this);
@@ -104,9 +104,9 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 				g.setStroke(new BasicStroke(5));
 				g.drawArc(TILE_SIZE * x - offsetX + 2, TILE_SIZE * y - offsetY + 2, TILE_SIZE - 5, TILE_SIZE - 5, 0, (int) (cell.getBase() / 8f * 360));
 				
-				// draw paths
+				// draw pipes
 				g.setColor(Color.WHITE);
-				if(cell.getPath(Cell.NORTH))
+				if(cell.getPipe(Cell.NORTH))
 					g.fillPolygon(new int[]{
 						x * TILE_SIZE + TILE_SIZE / 2 - offsetX,
 						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetX,
@@ -116,7 +116,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 						y * TILE_SIZE + TILE_SIZE / 4 - offsetY,
 						y * TILE_SIZE + TILE_SIZE / 4 - offsetY
 					}, 3);
-				if(cell.getPath(Cell.SOUTH))
+				if(cell.getPipe(Cell.SOUTH))
 					g.fillPolygon(new int[]{
 						x * TILE_SIZE + TILE_SIZE / 2 - offsetX,
 						x * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetX,
@@ -126,7 +126,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 						(y + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetY,
 						(y + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetY
 					}, 3);
-				if(cell.getPath(Cell.EAST))
+				if(cell.getPipe(Cell.EAST))
 					g.fillPolygon(new int[]{
 						(x + 1) * TILE_SIZE - offsetX,
 						(x + 1) * TILE_SIZE - TILE_SIZE / 4 - offsetX,
@@ -136,7 +136,7 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 						y * TILE_SIZE + TILE_SIZE / 2 - TILE_SIZE / 6 - offsetY,
 						y * TILE_SIZE + TILE_SIZE / 2 + TILE_SIZE / 6 - offsetY
 					}, 3);
-				if(cell.getPath(Cell.WEST))
+				if(cell.getPipe(Cell.WEST))
 					g.fillPolygon(new int[]{
 						x * TILE_SIZE - offsetX,
 						x * TILE_SIZE + TILE_SIZE / 4 - offsetX,
@@ -225,18 +225,18 @@ public class BoardPanel extends JPanel implements Runnable, MouseWheelListener, 
 			if(cell.getOwner() == client.getPlayer()) {
 			
 				if(subY == 0)
-					cell.togglePath(Cell.NORTH);
+					cell.togglePipe(Cell.NORTH);
 				if(subY == 2)
-					cell.togglePath(Cell.SOUTH);
+					cell.togglePipe(Cell.SOUTH);
 				if(subX == 0)
-					cell.togglePath(Cell.WEST);
+					cell.togglePipe(Cell.WEST);
 				if(subX == 2)
-					cell.togglePath(Cell.EAST);
+					cell.togglePipe(Cell.EAST);
 				if(subY == 1 && subX == 1) {
-					cell.togglePath(Cell.NORTH);
-					cell.togglePath(Cell.EAST);
-					cell.togglePath(Cell.SOUTH);
-					cell.togglePath(Cell.WEST);
+					cell.togglePipe(Cell.NORTH);
+					cell.togglePipe(Cell.EAST);
+					cell.togglePipe(Cell.SOUTH);
+					cell.togglePipe(Cell.WEST);
 				}
 
 				onCellUpdatedListeners.on();

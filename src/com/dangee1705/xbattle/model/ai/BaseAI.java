@@ -21,7 +21,7 @@ public class BaseAI extends AI {
 				if(cell.getOwner() == player) {
 					if(cell.getBase() == 8) {
 						for(int i = 0; i < 4; i++)
-							cell.setPath(i, true);
+							cell.setPipe(i, true);
 					} else if(cell.getTroops() == 100) {
 						cell.increaseBase();
 						cell.setTroops(0);

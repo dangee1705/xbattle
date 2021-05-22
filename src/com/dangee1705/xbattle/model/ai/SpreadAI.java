@@ -20,7 +20,7 @@ public class SpreadAI extends AI {
 				Cell cell = board.getCell(x, y);
 				if(cell.getOwner() == player)
 					for(int i = 0; i < 4; i++)
-						cell.setPath(i, true);
+						cell.setPipe(i, true);
 			}
 		}
 

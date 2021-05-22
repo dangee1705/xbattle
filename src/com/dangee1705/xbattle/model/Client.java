@@ -111,7 +111,6 @@ public class Client implements Runnable {
 		onConnectListeners.on();
 
 		while(running){
-			// TODO: make sure lobby commands cannot be run during game phase
 			try {
 				byte b = inputStream.readByte();
 				switch(b) {
@@ -166,9 +165,9 @@ public class Client implements Runnable {
 						int troops = inputStream.readInt();
 						int ownerId = inputStream.readInt();
 						int elevation = inputStream.readInt();
-						boolean[] paths = new boolean[4];
+						boolean[] pipes = new boolean[4];
 						for(int i = 0; i < 4; i++)
-							paths[i] = inputStream.readBoolean();
+							pipes[i] = inputStream.readBoolean();
 						int base = inputStream.readInt();
 
 						Cell cell = board.getCell(x, y);
@@ -176,7 +175,7 @@ public class Client implements Runnable {
 						cell.setOwner(getPlayerById(ownerId));
 						cell.setElevation(elevation);
 						for(int i = 0; i < 4; i++)
-							cell.setPath(i, paths[i]);
+							cell.setPipe(i, pipes[i]);
 						cell.setBase(base);
 						// set the cell to no updates so we dont send it back to the server unnecessarily
 						cell.setHasUpdate(false);
@@ -226,8 +225,8 @@ public class Client implements Runnable {
 				outputStream.writeInt(cell.getX());
 				outputStream.writeInt(cell.getY());
 				outputStream.writeInt(cell.getElevation());
-				for(boolean path : cell.getPaths())
-					outputStream.writeBoolean(path);
+				for(boolean pipe : cell.getPipes())
+					outputStream.writeBoolean(pipe);
 				outputStream.writeInt(cell.getBase());
 			} catch(IOException e) {
 				onErrorListeners.on();

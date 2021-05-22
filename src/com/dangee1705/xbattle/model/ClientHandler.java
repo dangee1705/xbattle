@@ -60,8 +60,8 @@ public class ClientHandler implements Runnable {
 					outputStream.writeInt(cell.getTroops());
 					outputStream.writeInt(cell.getOwner() == null ? -1 : cell.getOwner().getId());
 					outputStream.writeInt(cell.getElevation());
-					for(boolean path : cell.getPaths())
-						outputStream.writeBoolean(path);
+					for(boolean pipe : cell.getPipes())
+						outputStream.writeBoolean(pipe);
 					outputStream.writeInt(cell.getBase());
 					outputStream.flush();
 				} catch (IOException e) {
@@ -139,10 +139,10 @@ public class ClientHandler implements Runnable {
 					Cell cell = board.getCell(x, y);
 					if(cell.getOwner() == player) {
 						cell.setElevation(elevation);
-						cell.setPath(Cell.NORTH, north);
-						cell.setPath(Cell.EAST, east);
-						cell.setPath(Cell.SOUTH, south);
-						cell.setPath(Cell.WEST, west);
+						cell.setPipe(Cell.NORTH, north);
+						cell.setPipe(Cell.EAST, east);
+						cell.setPipe(Cell.SOUTH, south);
+						cell.setPipe(Cell.WEST, west);
 
 						// TODO: elevation change checks
 
@@ -151,7 +151,7 @@ public class ClientHandler implements Runnable {
 							cell.setTroops(0);
 						}
 
-						board.clearInvalidPaths();
+						board.clearInvalidPipes();
 					} else {
 						if(y > 0 && board.getCell(x, y - 1).getOwner() == player && board.getCell(x, y - 1).getTroops() == 100) {
 							cell.setElevation(elevation);

@@ -39,13 +39,13 @@ public class TowardsEnemyAI extends AI {
 					if(bestTarget != null) {
 						double angle = Math.atan2(bestTarget.getY() - originCell.getY(), bestTarget.getX() - originCell.getX());
 						if(angle < Math.PI / 4 && angle >= -Math.PI / 4)
-							originCell.setPath(Cell.EAST, true);
+							originCell.setPipe(Cell.EAST, true);
 						else if(angle < 3 * (Math.PI / 4) && angle >= Math.PI / 4)
-							originCell.setPath(Cell.SOUTH, true);
+							originCell.setPipe(Cell.SOUTH, true);
 						else if(angle < -Math.PI / 4 && angle >= -3 * (Math.PI / 4))
-							originCell.setPath(Cell.NORTH, true);
+							originCell.setPipe(Cell.NORTH, true);
 						else
-							originCell.setPath(Cell.WEST, true);
+							originCell.setPipe(Cell.WEST, true);
 					}
 				}
 

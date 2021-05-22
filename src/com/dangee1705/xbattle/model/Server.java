@@ -181,7 +181,7 @@ public class Server implements Runnable {
 		}
 
 		// generate the board
-		board = new Board(players, boardWidth, boardHeight, 0.4f, 10);
+		board = new Board(players, boardWidth, boardHeight, 0.5f, 10);
 
 		onGameStartListeners.on();
 		try {

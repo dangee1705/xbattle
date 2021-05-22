@@ -134,25 +134,25 @@ public class Board implements Iterable<Cell> {
 		return cells[y][x];
 	}
 
-	public void clearInvalidPaths() {
+	public void clearInvalidPipes() {
 		for(int y = 0; y < height; y++) {
 			for(int x = 0; x < width; x++) {
 				Cell cell = getCell(x, y);
 
-				// clear edge paths
+				// clear edge pipes
 				if(y == 0)
-					cell.setPath(Cell.NORTH, false);
+					cell.setPipe(Cell.NORTH, false);
 				else if(y == height - 1)
-					cell.setPath(Cell.SOUTH, false);
+					cell.setPipe(Cell.SOUTH, false);
 				if(x == width - 1)
-					cell.setPath(Cell.EAST, false);
+					cell.setPipe(Cell.EAST, false);
 				else if(x == 0)
-					cell.setPath(Cell.WEST, false);
+					cell.setPipe(Cell.WEST, false);
 
-				// clear paths which are in water or unowned
+				// clear pipes which are in water or unowned
 				if(cell.isWater() || cell.getOwner() == null)
 					for(int direction = 0; direction < 4; direction++)
-						cell.setPath(direction, false);
+						cell.setPipe(direction, false);
 				if(cell.isWater()) {
 					cell.setOwner(null);
 					cell.setTroops(0);
@@ -175,7 +175,7 @@ public class Board implements Iterable<Cell> {
 			if(to.getTroops() < 0) {
 				to.setTroops(-to.getTroops());
 				to.setOwner(from.getOwner());
-				to.clearPaths();
+				to.clearPipes();
 			}
 		}
 	}
@@ -200,7 +200,7 @@ public class Board implements Iterable<Cell> {
 
 	public void update() {
 		synchronized(this) {
-			clearInvalidPaths();
+			clearInvalidPipes();
 
 			for(int y = 0; y < height; y++) {
 				for(int x = 0; x < width; x++) {
@@ -224,17 +224,17 @@ public class Board implements Iterable<Cell> {
 					Cell southCell = cell.getSouthNeighbour();
 					Cell westCell = cell.getWestNeighbour();
 
-					int activePathCount = cell.getActivePathCount();
-					if(activePathCount > 0 && cell.getTroops() > activePathCount) {
-						int toMove = cell.getTroops() / activePathCount;
+					int activePipeCount = cell.getActivePipeCount();
+					if(activePipeCount > 0 && cell.getTroops() > activePipeCount) {
+						int toMove = cell.getTroops() / activePipeCount;
 
-						if(northCell != null && northCell.isLand() && cell.getPath(Cell.NORTH))
+						if(northCell != null && northCell.isLand() && cell.getPipe(Cell.NORTH))
 							moveTroops(cell, northCell, Math.min(toMove, 5) / (1 + elevationChange(cell, northCell) / 2));
-						if(eastCell != null && eastCell.isLand() && cell.getPath(Cell.EAST))
+						if(eastCell != null && eastCell.isLand() && cell.getPipe(Cell.EAST))
 							moveTroops(cell, eastCell, Math.min(toMove, 5) / (1 + elevationChange(cell, eastCell) / 2));
-						if(southCell != null && southCell.isLand() && cell.getPath(Cell.SOUTH))
+						if(southCell != null && southCell.isLand() && cell.getPipe(Cell.SOUTH))
 							moveTroops(cell, southCell, Math.min(toMove, 5) / (1 + elevationChange(cell, southCell) / 2));
-						if(westCell != null && westCell.isLand() && cell.getPath(Cell.WEST))
+						if(westCell != null && westCell.isLand() && cell.getPipe(Cell.WEST))
 							moveTroops(cell, westCell, Math.min(toMove, 5) / (1 + elevationChange(cell, westCell) / 2));
 					}
 				}

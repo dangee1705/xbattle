@@ -17,6 +17,10 @@ import javax.swing.SwingUtilities;
 
 import com.dangee1705.xbattle.model.Client;
 import com.dangee1705.xbattle.model.NamedColor;
+import com.dangee1705.xbattle.model.ai.AI;
+import com.dangee1705.xbattle.model.ai.BaseAI;
+import com.dangee1705.xbattle.model.ai.SpreadAI;
+import com.dangee1705.xbattle.model.ai.TowardsEnemyAI;
 
 public class ClientPanel extends JPanel {
 
@@ -71,9 +75,10 @@ public class ClientPanel extends JPanel {
 		client.addOnConnectErrorListener(() -> SwingUtilities.invokeLater(() -> {
 			connectButton.setEnabled(true);
 			connectButton.setText("Connect");
+			JOptionPane.showMessageDialog(this, "Could not connect to server", "Error", JOptionPane.ERROR_MESSAGE);
 		}));
 
-		playerSettings = new JPanel(new GridLayout(2, 2, 10, 10));
+		playerSettings = new JPanel(new GridLayout(3, 2, 10, 10));
 		playerSettings.add(new JLabel("Name"));
 		JTextField nameTextField = new JTextField();
 
@@ -101,8 +106,20 @@ public class ClientPanel extends JPanel {
 			}
 		});
 		playerSettings.add(colorComboBox);
+
+		playerSettings.add(new JLabel("AI"));
+		JComboBox<String> aiComboBox = new JComboBox<>();
+		aiComboBox.addItem("None");
+		aiComboBox.addItem("BaseAI");
+		aiComboBox.addItem("SpreadAI");
+		aiComboBox.addItem("TowardsEnemyAI");
+		aiComboBox.setSelectedIndex(0);
+		playerSettings.add(aiComboBox);
+
 		playerSettings.setVisible(false);
 		wrapperPanel.add(playerSettings);
+
+		
 
 		client.addOnPlayerUpdateListener(() -> SwingUtilities.invokeLater(() -> {
 			nameTextField.setText(client.getPlayer().getName());
@@ -115,6 +132,13 @@ public class ClientPanel extends JPanel {
 			boardPanel.addOnCellUpdatedListener(() -> client.sendCellUpdates());
 			settingsPanel.setVisible(false);
 			playerSettings.setVisible(false);
+
+			if(aiComboBox.getSelectedIndex() == 1)
+				new BaseAI(client);
+			else if(aiComboBox.getSelectedIndex() == 2)
+				new SpreadAI(client);
+			else if(aiComboBox.getSelectedIndex() == 3)
+				new TowardsEnemyAI(client);
 		}));
 
 		client.addOnGameEndListener(() -> SwingUtilities.invokeLater(() -> {

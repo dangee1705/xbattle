@@ -12,7 +12,7 @@ public class Cell {
 	private int troops = 0;
 	private Player owner = null;
 	private int elevation = 0;
-	private boolean[] paths = {false, false, false, false};
+	private boolean[] pipes = {false, false, false, false};
 	private int base = 0;
 	private boolean hasUpdate = true;
 	
@@ -62,27 +62,27 @@ public class Cell {
 			setHasUpdate(true);
 			if(isWater())
 				for(int i = 0; i < 4; i++)
-					paths[i] = false;
+					pipes[i] = false;
 		}
 	}
 
-	public boolean getPath(int direction) {
-		return paths[direction];
+	public boolean getPipe(int direction) {
+		return pipes[direction];
 	}
 
-	public void setPath(int direction, boolean active) {
-		if(active != paths[direction]) {
-			paths[direction] = active;
+	public void setPipe(int direction, boolean active) {
+		if(active != pipes[direction]) {
+			pipes[direction] = active;
 			setHasUpdate(true);
 		}
 	}
 
-	public boolean[] getPaths() {
-		return paths;
+	public boolean[] getPipes() {
+		return pipes;
 	}
 
-	public void togglePath(int direction) {
-		setPath(direction, !getPath(direction));
+	public void togglePipe(int direction) {
+		setPipe(direction, !getPipe(direction));
 	}
 
 	public int getBase() {
@@ -104,10 +104,10 @@ public class Cell {
 		this.hasUpdate = hasUpdate;
 	}
 
-	public int getActivePathCount() {
+	public int getActivePipeCount() {
 		int count = 0;
 		for(int i = 0; i < 4; i++)
-			if(paths[i])
+			if(pipes[i])
 				count++;
 		return count;
 	}
@@ -144,36 +144,36 @@ public class Cell {
 		return x == 0 ? null : board.getCell(x - 1, y);
 	}
 
-	// public void clearInvalidPaths() {
+	// public void clearInvalidPipes() {
 	// 	if(isWater()) {
 	// 		for(int i = 0; i < 4; i++) {
-	// 			if(paths[i]) {
-	// 				paths[i] = false;
+	// 			if(pipes[i]) {
+	// 				pipes[i] = false;
 	// 				setHasUpdate(true);
 	// 			}
 	// 		}
 	// 	}
-	// 	if((getNorthNeighbour() == null || getNorthNeighbour().isWater()) && paths[NORTH]) {
-	// 		paths[NORTH] = false;
+	// 	if((getNorthNeighbour() == null || getNorthNeighbour().isWater()) && pipes[NORTH]) {
+	// 		pipes[NORTH] = false;
 	// 		setHasUpdate(true);
 	// 	}
-	// 	if((getEastNeighbour() == null || getEastNeighbour().isWater()) && paths[EAST]) {
-	// 		paths[EAST] = false;
+	// 	if((getEastNeighbour() == null || getEastNeighbour().isWater()) && pipes[EAST]) {
+	// 		pipes[EAST] = false;
 	// 		setHasUpdate(true);
 	// 	}
-	// 	if((getSouthNeighbour() == null || getSouthNeighbour().isWater()) && paths[SOUTH]) {
-	// 		paths[SOUTH] = false;
+	// 	if((getSouthNeighbour() == null || getSouthNeighbour().isWater()) && pipes[SOUTH]) {
+	// 		pipes[SOUTH] = false;
 	// 		setHasUpdate(true);
 	// 	}
-	// 	if((getWestNeighbour() == null || getWestNeighbour().isWater()) && paths[WEST]) {
-	// 		paths[WEST] = false;
+	// 	if((getWestNeighbour() == null || getWestNeighbour().isWater()) && pipes[WEST]) {
+	// 		pipes[WEST] = false;
 	// 		setHasUpdate(true);
 	// 	}
 	// }
 
-	public void clearPaths() {
+	public void clearPipes() {
 		for(int i = 0; i < 4; i++)
-			setPath(i, false);
+			setPipe(i, false);
 	}
 
 	public void increaseBase() {
