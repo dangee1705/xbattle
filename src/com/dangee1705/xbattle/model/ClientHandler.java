@@ -91,8 +91,6 @@ public class ClientHandler implements Runnable {
 						cell.setPipe(Cell.SOUTH, south);
 						cell.setPipe(Cell.WEST, west);
 
-						// TODO: elevation change checks
-
 						if(cell.getBase() != base && Math.abs(cell.getBase() - base) == 1 && cell.getTroops() == 100) {
 							cell.setBase(base);
 							cell.setTroops(0);

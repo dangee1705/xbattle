@@ -52,7 +52,6 @@ public class ServerPanel extends JPanel implements ListCellRenderer<ClientHandle
 		settingsGridPanel.add(ticksPerSecondSpinner);
 		settingsPanel.add(settingsGridPanel, BorderLayout.CENTER);
 
-		// TODO: stop server too
 		JButton startServerButton = new JButton("Start Server");
 		settingsPanel.add(startServerButton, BorderLayout.PAGE_END);
 

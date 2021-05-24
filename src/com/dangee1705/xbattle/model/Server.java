@@ -169,7 +169,6 @@ public class Server implements Runnable {
 
 				Player player = new Player(nextPlayerId++, "Player " + nextPlayerId, colourId);
 				ClientHandler clientHandler = new ClientHandler(this, socket, player);
-				// TODO: register error handlers and unregister at end
 				clientHandlers.add(clientHandler);
 				players.add(player);
 

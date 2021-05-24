@@ -7,14 +7,6 @@ public abstract class AI {
 
 	public AI(Client client) {
 		this.client = client;
-		client.addOnConnectListener(() -> {
-			System.out.println("connected");
-		});
-		client.addOnConnectErrorListener(() -> {
-			System.out.println("connect error");
-		});
-		client.addOnPlayerUpdateListener(() -> {});
-		client.addOnGameStartListener(() -> {});
 		client.addOnCellUpdatedListener(() -> onCellUpdated());
 	}
 
